@@ -102,6 +102,8 @@ details.tl .in{padding:0 10px 10px}
   <nav>
     <button data-tab="top" class="on">Top 10</button>
     <button data-tab="tl">Top 10 + Ladders</button>
+    <button data-tab="aCE">All CE strikes</button>
+    <button data-tab="aPE">All PE strikes</button>
     <button data-tab="lad">Ladder</button>
     <button data-tab="jl">Juice Live (all)</button>
     <button id="refresh">&#8635; Refresh</button>
@@ -147,6 +149,39 @@ details.tl .in{padding:0 10px 10px}
       <div class="note">Sorting is shared: tap a column name in any table and all 10 tables sort the same way.</div>
     </div>
     <div id="tlwrap"></div>
+  </section>
+
+  <section id="tab-aCE" class="hide">
+    <div class="card">
+      <div class="meta"><b>CALL (CE)</b> strikes of all top-10 stocks in ONE table. Sort by any column (default: KEPT, high to low) and pick the juiciest. Blue edge = the scanner's pick.</div>
+      <div class="chips" id="aCEchips"></div>
+      <div class="bar">
+        <label><input type="checkbox" id="aCEpass"> PASS only</label>
+        <label><input type="checkbox" id="aCEgone" checked> hide GONE</label>
+        <label>min &#8377;/lot <input type="number" id="aCEmin" value="2000" step="500" style="width:86px"></label>
+        <label>max touch % <input type="number" id="aCEtouch" value="35" step="5" style="width:70px"></label>
+        <label>min OTM % <input type="number" id="aCEotm" value="0" step="0.5" style="width:70px"></label>
+        <span class="note" id="aCEcount"></span>
+      </div>
+      <div class="wrap" id="aCEtable"></div>
+      <div class="note">Grade filter (top of the page) also applies here. Tap a stock name above to hide or show it.</div>
+    </div>
+  </section>
+  <section id="tab-aPE" class="hide">
+    <div class="card">
+      <div class="meta"><b>PUT (PE)</b> strikes of all top-10 stocks in ONE table. Sort by any column (default: KEPT, high to low) and pick the juiciest. Blue edge = the scanner's pick.</div>
+      <div class="chips" id="aPEchips"></div>
+      <div class="bar">
+        <label><input type="checkbox" id="aPEpass"> PASS only</label>
+        <label><input type="checkbox" id="aPEgone" checked> hide GONE</label>
+        <label>min &#8377;/lot <input type="number" id="aPEmin" value="2000" step="500" style="width:86px"></label>
+        <label>max touch % <input type="number" id="aPEtouch" value="35" step="5" style="width:70px"></label>
+        <label>min OTM % <input type="number" id="aPEotm" value="0" step="0.5" style="width:70px"></label>
+        <span class="note" id="aPEcount"></span>
+      </div>
+      <div class="wrap" id="aPEtable"></div>
+      <div class="note">Grade filter (top of the page) also applies here. Tap a stock name above to hide or show it.</div>
+    </div>
   </section>
 
   <section id="tab-lad" class="hide">
@@ -353,7 +388,7 @@ document.querySelectorAll("nav button[data-tab]").forEach(function (b) {
   b.onclick = function () { TAB = b.getAttribute("data-tab"); store("juice_tab", TAB); showTab(); };
 });
 function showTab() {
-  ["top", "tl", "lad", "jl"].forEach(function (t) { $("tab-" + t).classList.toggle("hide", t !== TAB); });
+  ["top", "tl", "aCE", "aPE", "lad", "jl"].forEach(function (t) { $("tab-" + t).classList.toggle("hide", t !== TAB); });
   document.querySelectorAll("nav button[data-tab]").forEach(function (b) { b.classList.toggle("on", b.getAttribute("data-tab") === TAB); });
   render();
 }
@@ -528,6 +563,48 @@ function renderTL() {
   });
 }
 
+function renderAll(typ) {
+  var L = DATA.ladders || [], el = $("a" + typ + "table");
+  if (!L.length) { el.innerHTML = '<div class="note" style="padding:10px">No ladders yet.</div>'; return; }
+  var off = AOFF[typ];
+  $("a" + typ + "chips").innerHTML = '<button class="chip" data-s="*">all</button>' + L.map(function (b) {
+    var sym = b.meta.sym, np = b.rows.filter(function (r) { return r.type === typ && r.ok; }).length;
+    return '<button class="chip' + (off[sym] ? "" : " on") + '" data-s="' + esc(sym) + '">' + esc(sym) +
+      '<span class="dot" style="background:' + (np ? "#0a7d32" : "#b3261e") + '" title="' + np + ' pass"></span></button>';
+  }).join("");
+  $("a" + typ + "chips").querySelectorAll(".chip").forEach(function (c) {
+    c.onclick = function () {
+      var sym = c.getAttribute("data-s");
+      if (sym === "*") { AOFF[typ] = {}; } else { if (AOFF[typ][sym]) delete AOFF[typ][sym]; else AOFF[typ][sym] = 1; }
+      store("juice_aoff", JSON.stringify(AOFF)); render();
+    };
+  });
+  var onlyPass = $("a" + typ + "pass").checked, noGone = $("a" + typ + "gone").checked;
+  var mn = n($("a" + typ + "min").value) || 0, mt = n($("a" + typ + "touch").value), mo = n($("a" + typ + "otm").value) || 0;
+  var rows = [], all = 0;
+  L.forEach(function (b) {
+    b.rows.forEach(function (r) {
+      if (r.type !== typ) return;
+      all++;
+      if (off[r.stock]) return;
+      if (onlyPass && !r.ok) return;
+      if (noGone && r.status === "GONE") return;
+      if ((n(r.prem) || 0) < mn) return;
+      if (mt !== null && n(r.p_touch) !== null && n(r.p_touch) > mt) return;
+      if ((n(r.otm) || 0) < mo) return;
+      if (!gpass(r)) return;
+      rows.push(r);
+    });
+  });
+  $("a" + typ + "count").textContent = rows.length + " of " + all + " " + typ + " strikes";
+  var max = Math.max.apply(null, rows.map(function (r) { return n(r.kept) || 0; }).concat([1]));
+  var cols = [{ k: "stock", t: "Option", a: "l", txt: 1, sv: function (r) { return r.stock + " " + String(1e6 + Number(r.strike)); },
+    f: function (r) { return '<span class="k">' + esc(r.stock) + " " + r.strike + " " + r.type + "</span>" + (r.pick ? " " + badge("PICK #" + r.pick, "#1a5fb4") : "") +
+      ' <span class="m">' + dmy(r.expiry) + "</span>"; } }].concat(LADCOLS(max).filter(function (c) { return c.k !== "strike"; }));
+  var cls = function (r) { return (r.best ? "best" : (r.ok ? "pass" : (r.held ? "held" : ""))) + (r.pick ? " pick" : ""); };
+  table(el, "all" + typ, cols, rows, cls, { k: "kept", d: "desc" });
+}
+
 function renderJL() {
   var rows = DATA.juice || [], jm = DATA.juice_meta || {};
   $("jlmeta").innerHTML = rows.length ? ("Juice Live " + esc(DATA.juice_generated || "") + " - scan " + esc(jm.scan || "-") + " - rules: " + esc(jm.rules || "-")) :
@@ -565,9 +642,14 @@ function renderJL() {
 function render() {
   if (!DATA) return;
   header();
-  if (TAB === "top") renderTop(); else if (TAB === "tl") renderTL(); else if (TAB === "lad") renderLad(); else renderJL();
+  if (TAB === "top") renderTop(); else if (TAB === "tl") renderTL(); else if (TAB === "aCE") renderAll("CE"); else if (TAB === "aPE") renderAll("PE"); else if (TAB === "lad") renderLad(); else renderJL();
 }
-["ladside", "ladpass", "ladgone", "jlside", "jlpass", "jlgone", "jlmin", "tlboth", "tlpass", "tlgone"].forEach(function (id) { $(id).onchange = render; });
+["ladside", "ladpass", "ladgone", "jlside", "jlpass", "jlgone", "jlmin", "tlboth", "tlpass", "tlgone",
+ "aCEpass", "aCEgone", "aCEmin", "aCEtouch", "aCEotm", "aPEpass", "aPEgone", "aPEmin", "aPEtouch", "aPEotm"].forEach(function (id) { $(id).onchange = render; });
+["aCEmin", "aCEtouch", "aCEotm", "aPEmin", "aPEtouch", "aPEotm"].forEach(function (id) { $(id).oninput = render; });
+var AOFF = { CE: {}, PE: {} };
+try { AOFF = JSON.parse(store("juice_aoff") || "") || AOFF; } catch (e) {}
+if (!AOFF.CE) AOFF.CE = {}; if (!AOFF.PE) AOFF.PE = {};
 var TLCLOSED = {};
 try { TLCLOSED = JSON.parse(store("juice_tlclosed") || "{}") || {}; } catch (e) { TLCLOSED = {}; }
 $("tlopen").onclick = function () { TLCLOSED = {}; store("juice_tlclosed", "{}"); render(); };
