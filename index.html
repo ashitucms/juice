@@ -69,8 +69,8 @@ h3{margin:12px 0 6px;font-size:15px}
 <body>
 <div id="lock" class="card">
   <h2>Juice</h2>
-  <div class="note">Your option-selling data, locked with your password. It is decrypted here in your browser. GitHub only stores scrambled bytes.</div>
-  <input id="pw" type="password" placeholder="Password" autocomplete="current-password">
+  <div class="note">Your option-selling data, locked with your PIN. It is decrypted here in your browser. GitHub only stores scrambled bytes.</div>
+  <input id="pw" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="4-digit PIN" autocomplete="current-password" autofocus>
   <label class="note"><input id="rem" type="checkbox" checked> Remember on this device</label>
   <button id="go">Unlock</button>
   <div id="err"></div>
@@ -96,7 +96,7 @@ h3{margin:12px 0 6px;font-size:15px}
       <div class="meta" id="topmeta"></div>
       <div class="wrap" id="toptable"></div>
       <div id="basket"></div>
-      <div class="note">Tap a column name to sort (tap again = reverse). Tap an option to open its ladder. SELL = Kite opens with the order filled in; you check and press Place.</div>
+      <div class="note">Tap a column name to sort (tap again = reverse). Tap an option to open its ladder. Place orders in the Kite app.</div>
     </div>
   </section>
 
@@ -209,6 +209,7 @@ function dmy(s) { if (!s) return "-"; var d = new Date(String(s).slice(0, 10) + 
 var SORT = {};
 try { SORT = JSON.parse(store("juice_sort") || "{}") || {}; } catch (e) { SORT = {}; }
 function table(el, id, cols, rows, rowcls, defSort) {
+  if (DATA && !DATA.kite) cols = cols.filter(function (c) { return c.k !== "url"; });   // no Kite column when links are off
   var st = SORT[id] || defSort || null;
   var data = rows.slice();
   if (st) {
@@ -265,7 +266,7 @@ function header() {
   var mins = Math.round((Date.now() - g.getTime()) / 60000);
   $("agep").textContent = "updated " + String(DATA.generated).slice(11, 16) + " IST" + (mins >= 1 ? " (" + mins + " min ago)" : "");
   $("sub").textContent = "Ladders " + (DATA.ladder_generated || "-") + " - Juice Live " + (DATA.juice_generated || "-") +
-    (DATA.kite ? "" : " - Kite SELL links off");
+    "";
   var ist = new Date(Date.now() + 330 * 60000), hm = ist.getUTCHours() * 100 + ist.getUTCMinutes(), wd = ist.getUTCDay();
   var mkt = wd >= 1 && wd <= 5 && hm >= 915 && hm <= 1530;
   var s = $("stale");
@@ -412,12 +413,14 @@ async function unlock(pw, quiet) {
     $("lock").classList.add("hide"); $("app").classList.remove("hide"); showTab();
     return true;
   } catch (e) {
-    $("err").textContent = (e && e.name === "OperationError") ? "Wrong password." : ("Could not load: " + (e && e.message ? e.message : e));
+    if (e && e.name === "OperationError") $("pw").value = "";
+    $("err").textContent = (e && e.name === "OperationError") ? "Wrong PIN." : ("Could not load: " + (e && e.message ? e.message : e));
     return false;
   }
 }
 $("go").onclick = function () { unlock($("pw").value); };
 $("pw").onkeydown = function (e) { if (e.key === "Enter") unlock($("pw").value); };
+$("pw").oninput = function () { var v = $("pw").value; if (/^[0-9]{4}$/.test(v)) unlock(v); };
 $("refresh").onclick = async function () { try { if (await load(PW)) render(); else header(); } catch (e) {} };
 var saved = store("juice_pw");
 var hashpw = new URLSearchParams(location.hash.slice(1)).get("p");   // one-tap link: ...juice/#p=<password> (never sent to GitHub)
