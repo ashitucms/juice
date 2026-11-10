@@ -63,6 +63,12 @@ a.big{font-size:15px;padding:9px 16px;margin:4px 0}
 .hide{display:none}
 h3{margin:12px 0 6px;font-size:15px}
 .meta{font-size:13px;color:var(--mut);margin-bottom:8px}
+details.tl{background:var(--card);border:1px solid var(--line);border-radius:8px;margin-bottom:12px}
+details.tl summary{cursor:pointer;padding:10px 12px;font-size:15px;list-style:none}
+details.tl summary::-webkit-details-marker{display:none}
+details.tl summary .rk{display:inline-block;min-width:30px;font-weight:800;color:var(--blue)}
+details.tl summary .sm{font-size:12px;color:var(--mut);margin-left:30px;margin-top:3px}
+details.tl .in{padding:0 10px 10px}
 @media (max-width:600px){header{padding:9px 12px}header .sub{display:none}nav button{padding:6px 10px;font-size:13px}main{padding:10px 8px 40px}th,td{padding:4px 6px}}
 </style>
 </head>
@@ -82,6 +88,7 @@ h3{margin:12px 0 6px;font-size:15px}
   <div class="sub" id="sub"></div>
   <nav>
     <button data-tab="top" class="on">Top 10</button>
+    <button data-tab="tl">Top 10 + Ladders</button>
     <button data-tab="lad">Ladder</button>
     <button data-tab="jl">Juice Live (all)</button>
     <button id="refresh">&#8635; Refresh</button>
@@ -98,6 +105,20 @@ h3{margin:12px 0 6px;font-size:15px}
       <div id="basket"></div>
       <div class="note">Tap a column name to sort (tap again = reverse). Tap an option to open its ladder. Place orders in the Kite app.</div>
     </div>
+  </section>
+
+  <section id="tab-tl" class="hide">
+    <div class="card">
+      <div class="meta">Each top-10 pick with the other strikes of the same stock and side: juice, risk and liquidity for every strike. The pick row has a blue edge.</div>
+      <div class="bar">
+        <label><input type="checkbox" id="tlboth"> show both CE and PE</label>
+        <label><input type="checkbox" id="tlpass"> PASS only</label>
+        <label><input type="checkbox" id="tlgone"> hide GONE</label>
+        <button class="chip" id="tlopen">open all</button><button class="chip" id="tlclose">close all</button>
+      </div>
+      <div class="note">Sorting is shared: tap a column name in any table and all 10 tables sort the same way.</div>
+    </div>
+    <div id="tlwrap"></div>
   </section>
 
   <section id="tab-lad" class="hide">
@@ -253,7 +274,7 @@ document.querySelectorAll("nav button[data-tab]").forEach(function (b) {
   b.onclick = function () { TAB = b.getAttribute("data-tab"); store("juice_tab", TAB); showTab(); };
 });
 function showTab() {
-  ["top", "lad", "jl"].forEach(function (t) { $("tab-" + t).classList.toggle("hide", t !== TAB); });
+  ["top", "tl", "lad", "jl"].forEach(function (t) { $("tab-" + t).classList.toggle("hide", t !== TAB); });
   document.querySelectorAll("nav button[data-tab]").forEach(function (b) { b.classList.toggle("on", b.getAttribute("data-tab") === TAB); });
   render();
 }
@@ -364,6 +385,46 @@ function renderLad() {
   });
 }
 
+function renderTL() {
+  var t = DATA.top10, W = $("tlwrap");
+  if (!t) { W.innerHTML = '<div class="card note">No top-10 list yet.</div>'; return; }
+  var both = $("tlboth").checked, onlyPass = $("tlpass").checked, noGone = $("tlgone").checked;
+  var blocks = {}; (DATA.ladders || []).forEach(function (b) { blocks[b.meta.sym] = b; });
+  var tmax = Math.max.apply(null, t.rows.map(function (r) { return n(r.kept) || 0; }).concat([1]));
+  W.innerHTML = t.rows.map(function (p) {
+    var b = blocks[p.stock];
+    var head = '<span class="rk">#' + p.rank + "</span><b>" + esc(p.stock) + " " + p.strike + " " + p.type + "</b> " +
+      '<span class="m">' + dmy(p.expiry) + "</span> &nbsp; bid <b>" + f(p.bid) + "</b> - &#8377;" + f0(p.prem) + "/lot - KEPT " + heat(p.kept, tmax) +
+      " " + (p.ok ? badge("PASS", "#0a7d32") : '<span class="why r">' + esc(why(p.why)) + "</span>") +
+      (p.juice_gone ? ' <span class="a k">juice gone</span>' : "");
+    var sm = "";
+    if (b) {
+      var m = b.meta, chg = n(m.prev_spot) ? (m.spot / m.prev_spot - 1) * 100 : null;
+      sm = "spot " + f(m.spot) + (chg === null ? "" : " (" + (chg >= 0 ? "+" : "") + chg.toFixed(1) + "%)") + " - " + m.Hs + " sessions - exit by " + dmy(m.exit_by) +
+        " - ATM IV " + pc(n(m.atm_iv) * 100) + " - HV20 " + pc(n(m.hv20) * 100) + " - scanner ROI " + f(p.roi) + "% edge " + f(p.edge) + "% touch " + pc(p.touch) +
+        (m.event ? ' - <span class="r k">RESULTS ' + esc(m.event) + "</span>" : "");
+    } else sm = "no ladder for this stock yet";
+    return '<details class="tl" data-rank="' + p.rank + '"' + (TLCLOSED[p.rank] ? "" : " open") + "><summary>" + head + '<div class="sm">' + sm + "</div></summary>" +
+      '<div class="in"><div class="wrap" id="tl-' + p.rank + '"></div></div></details>';
+  }).join("");
+  t.rows.forEach(function (p) {
+    var b = blocks[p.stock], el = $("tl-" + p.rank);
+    if (!b || !el) return;
+    var rows = b.rows.filter(function (r) { return (both || r.type === p.type) && (!onlyPass || r.ok) && (!noGone || r.status !== "GONE"); });
+    var max = Math.max.apply(null, b.rows.map(function (r) { return n(r.kept) || 0; }).concat([1]));
+    var cls = function (r) { return (r.best ? "best" : (r.ok ? "pass" : (r.held ? "held" : ""))) + ((Number(r.strike) === Number(p.strike) && r.type === p.type) ? " pick" : ""); };
+    var cols = LADCOLS(max);
+    if (both) cols.splice(1, 0, { k: "type", t: "Type", a: "c", txt: 1, f: function (r) { return '<span class="k">' + r.type + "</span>"; } });
+    table(el, "tl", cols, rows, cls, { k: "otm", d: "asc" });
+  });
+  W.querySelectorAll("details.tl").forEach(function (d) {
+    d.addEventListener("toggle", function () {
+      var rk = d.getAttribute("data-rank"); if (d.open) delete TLCLOSED[rk]; else TLCLOSED[rk] = 1;
+      store("juice_tlclosed", JSON.stringify(TLCLOSED));
+    });
+  });
+}
+
 function renderJL() {
   var rows = DATA.juice || [], jm = DATA.juice_meta || {};
   $("jlmeta").innerHTML = rows.length ? ("Juice Live " + esc(DATA.juice_generated || "") + " - scan " + esc(jm.scan || "-") + " - rules: " + esc(jm.rules || "-")) :
@@ -399,9 +460,13 @@ function renderJL() {
 function render() {
   if (!DATA) return;
   header();
-  if (TAB === "top") renderTop(); else if (TAB === "lad") renderLad(); else renderJL();
+  if (TAB === "top") renderTop(); else if (TAB === "tl") renderTL(); else if (TAB === "lad") renderLad(); else renderJL();
 }
-["ladside", "ladpass", "ladgone", "jlside", "jlpass", "jlgone", "jlmin"].forEach(function (id) { $(id).onchange = render; });
+["ladside", "ladpass", "ladgone", "jlside", "jlpass", "jlgone", "jlmin", "tlboth", "tlpass", "tlgone"].forEach(function (id) { $(id).onchange = render; });
+var TLCLOSED = {};
+try { TLCLOSED = JSON.parse(store("juice_tlclosed") || "{}") || {}; } catch (e) { TLCLOSED = {}; }
+$("tlopen").onclick = function () { TLCLOSED = {}; store("juice_tlclosed", "{}"); render(); };
+$("tlclose").onclick = function () { (DATA && DATA.top10 ? DATA.top10.rows : []).forEach(function (r) { TLCLOSED[r.rank] = 1; }); store("juice_tlclosed", JSON.stringify(TLCLOSED)); render(); };
 $("jlq").oninput = render;
 
 // ---------- unlock + auto refresh ----------
