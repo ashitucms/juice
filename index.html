@@ -421,7 +421,7 @@ $("pw").onkeydown = function (e) { if (e.key === "Enter") unlock($("pw").value);
 $("refresh").onclick = async function () { try { if (await load(PW)) render(); else header(); } catch (e) {} };
 var saved = store("juice_pw");
 if (saved) unlock(saved, true);
-setInterval(async function () { if (!PW) return; try { if (await load(PW)) render(); else header(); } catch (e) {} }, 60000);
+setInterval(async function () { if (!PW) return; try { if (await load(PW)) render(); else header(); } catch (e) {} }, 120000);
 })();
 </script>
 </body>
