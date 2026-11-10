@@ -1,0 +1,428 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<meta name="referrer" content="no-referrer">
+<title>Juice</title>
+<style>
+:root{--bg:#f4f6f9;--card:#fff;--fg:#14181f;--mut:#5b6573;--line:#e1e5eb;--head:#e8edf3;--navy:#1f3a5f;
+--g:#0a7d32;--a:#c47a00;--r:#b3261e;--blue:#1a5fb4;--pass:#e3f6e8;--best:#bee9c9;--alt:#f8f9fb;--btn:#387ed1;--hl:#fff4e0}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0f1318;--card:#171c23;--fg:#e8ecf1;--mut:#9aa5b4;--line:#2a313b;--head:#202833;
+--navy:#16263d;--pass:#163322;--best:#1d4a2c;--alt:#1b2129;--hl:#3a2c12}}
+:root[data-theme=dark]{--bg:#0f1318;--card:#171c23;--fg:#e8ecf1;--mut:#9aa5b4;--line:#2a313b;--head:#202833;--navy:#16263d;--pass:#163322;--best:#1d4a2c;--alt:#1b2129;--hl:#3a2c12}
+*{box-sizing:border-box}
+body{margin:0;font:14px -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;background:var(--bg);color:var(--fg)}
+header{background:var(--navy);color:#fff;padding:12px 16px;position:sticky;top:0;z-index:5}
+header h1{margin:0;font-size:19px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+header .sub{font-size:12px;color:#c9d4e3;margin-top:3px}
+.pill{display:inline-block;border-radius:10px;padding:1px 8px;font-size:12px;font-weight:700;color:#fff}
+nav{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+nav button{background:rgba(255,255,255,.12);color:#fff;border:0;border-radius:6px;padding:7px 13px;font-size:14px;font-weight:600;cursor:pointer}
+nav button.on{background:#fff;color:var(--navy)}
+main{padding:12px 16px 40px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:10px;margin-bottom:14px}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px}
+.bar label{font-size:13px;color:var(--mut);display:flex;gap:4px;align-items:center}
+input[type=text],input[type=number],input[type=password],select{font:inherit;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--fg)}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.chip{border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:14px;padding:5px 11px;font-weight:600;cursor:pointer;font-size:13px}
+.chip.on{background:var(--blue);color:#fff;border-color:var(--blue)}
+.chip .dot{display:inline-block;width:8px;height:8px;border-radius:4px;margin-left:5px;vertical-align:middle}
+.wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--line);border-radius:6px}
+table{border-collapse:collapse;width:100%;background:var(--card)}
+th,td{padding:5px 8px;border-bottom:1px solid var(--line);white-space:nowrap;text-align:right}
+th{background:var(--head);color:var(--mut);font-size:12px;position:sticky;top:0;cursor:pointer;user-select:none}
+th.sorted{color:var(--fg)}
+th .ar{font-size:10px;margin-left:3px}
+td.l,th.l{text-align:left}
+td.c,th.c{text-align:center}
+td:first-child,th:first-child{position:sticky;left:0;z-index:1;background:inherit}
+tr{background:var(--card)}
+tr:nth-child(even){background:var(--alt)}
+tr.pass{background:var(--pass)}
+tr.best{background:var(--best)}
+tr.held{background:var(--hl)}
+tr.pick td:first-child{box-shadow:inset 4px 0 0 var(--blue)}
+.b{display:inline-block;border-radius:4px;padding:1px 6px;color:#fff;font-weight:700;font-size:11px}
+.k{font-weight:700}
+.heat{display:inline-block;min-width:44px;text-align:center;border-radius:4px;padding:1px 5px;font-weight:700}
+.g{color:var(--g)}.a{color:var(--a)}.r{color:var(--r)}.m{color:var(--mut)}
+.why{color:var(--mut);font-size:12px}
+a.sell{display:inline-block;background:var(--btn);color:#fff;text-decoration:none;font-weight:700;border-radius:5px;padding:3px 10px;font-size:12px}
+a.big{font-size:15px;padding:9px 16px;margin:4px 0}
+.opt{color:var(--blue);font-weight:700;cursor:pointer}
+.note{font-size:12px;color:var(--mut);line-height:1.5}
+.warn{background:#fff3c4;color:#6b4a00;border-radius:6px;padding:7px 10px;font-weight:600;margin-bottom:10px;font-size:13px}
+#lock{max-width:380px;margin:60px auto;padding:22px}
+#lock h2{margin:0 0 12px}
+#lock input{width:100%;font-size:16px;padding:10px;margin:6px 0}
+#lock button{width:100%;font-size:16px;padding:11px;background:var(--btn);color:#fff;border:0;border-radius:7px;font-weight:700;margin-top:8px}
+#err{color:var(--r);font-weight:600;min-height:20px;margin-top:8px}
+.hide{display:none}
+h3{margin:12px 0 6px;font-size:15px}
+.meta{font-size:13px;color:var(--mut);margin-bottom:8px}
+@media (max-width:600px){header{padding:9px 12px}header .sub{display:none}nav button{padding:6px 10px;font-size:13px}main{padding:10px 8px 40px}th,td{padding:4px 6px}}
+</style>
+</head>
+<body>
+<div id="lock" class="card">
+  <h2>Juice</h2>
+  <div class="note">Your option-selling data, locked with your password. It is decrypted here in your browser. GitHub only stores scrambled bytes.</div>
+  <input id="pw" type="password" placeholder="Password" autocomplete="current-password">
+  <label class="note"><input id="rem" type="checkbox" checked> Remember on this device</label>
+  <button id="go">Unlock</button>
+  <div id="err"></div>
+</div>
+
+<div id="app" class="hide">
+<header>
+  <h1>Juice <span id="livep" class="pill"></span> <span id="agep" class="pill" style="background:#55606e"></span></h1>
+  <div class="sub" id="sub"></div>
+  <nav>
+    <button data-tab="top" class="on">Top 10</button>
+    <button data-tab="lad">Ladder</button>
+    <button data-tab="jl">Juice Live (all)</button>
+    <button id="refresh">&#8635; Refresh</button>
+    <button id="theme" title="light / dark">Theme</button>
+  </nav>
+</header>
+<main>
+  <div id="stale" class="warn hide"></div>
+
+  <section id="tab-top">
+    <div class="card">
+      <div class="meta" id="topmeta"></div>
+      <div class="wrap" id="toptable"></div>
+      <div id="basket"></div>
+      <div class="note">Tap a column name to sort (tap again = reverse). Tap an option to open its ladder. SELL = Kite opens with the order filled in; you check and press Place.</div>
+    </div>
+  </section>
+
+  <section id="tab-lad" class="hide">
+    <div class="card">
+      <div class="chips" id="ladchips"></div>
+      <div class="meta" id="ladmeta"></div>
+      <div class="bar">
+        <label>Side <select id="ladside"><option value="both">CE + PE</option><option value="CE">CE only</option><option value="PE">PE only</option></select></label>
+        <label><input type="checkbox" id="ladpass"> PASS only</label>
+        <label><input type="checkbox" id="ladgone"> hide GONE</label>
+      </div>
+      <h3 id="h-ce">CALLS (CE) - above spot</h3><div class="wrap" id="ladce"></div>
+      <h3 id="h-pe">PUTS (PE) - below spot</h3><div class="wrap" id="ladpe"></div>
+      <div class="note">Green row = passes the rules (darker = best KEPT). Blue edge = the scanner's pick. vs top = premium now &divide; today's high (100% = still at the top). KEPT = &#8377; per day per &#8377;1 lakh margin you keep after expected losses (MODEL). Touch = % of past windows (2 yrs) that touched the strike.</div>
+    </div>
+  </section>
+
+  <section id="tab-jl" class="hide">
+    <div class="card">
+      <div class="meta" id="jlmeta"></div>
+      <div class="bar">
+        <input type="text" id="jlq" placeholder="Stock..." style="width:120px">
+        <label>Side <select id="jlside"><option value="">All</option><option>CE</option><option>PE</option></select></label>
+        <label><input type="checkbox" id="jlpass" checked> PASS only</label>
+        <label><input type="checkbox" id="jlgone"> hide GONE</label>
+        <label>min &#8377;/lot <input type="number" id="jlmin" value="0" step="500" style="width:86px"></label>
+        <span class="note" id="jlcount"></span>
+      </div>
+      <div class="wrap" id="jltable"></div>
+      <div class="note">Every candidate strike from the last full scan, priced live by Juice Live. Default sort: KEPT, high to low.</div>
+    </div>
+  </section>
+</main>
+</div>
+
+<script>
+(function () {
+"use strict";
+var API = "https://api.github.com/repos/ashitucms/juice/contents/data.json?ref=data";
+var RAW = "https://raw.githubusercontent.com/ashitucms/juice/data/data.json";
+var PW = null, DATA = null, LAST_T = null, LADSYM = null;
+var $ = function (id) { return document.getElementById(id); };
+function store(k, v) { try { if (v === undefined) return localStorage.getItem(k); if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) { return null; } }
+
+// ---------- theme ----------
+var th = store("juice_theme"); if (th) document.documentElement.setAttribute("data-theme", th);
+$("theme").onclick = function () {
+  var cur = document.documentElement.getAttribute("data-theme") ||
+    (window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+  var nx = cur === "dark" ? "light" : "dark"; document.documentElement.setAttribute("data-theme", nx); store("juice_theme", nx);
+};
+
+// ---------- fetch + decrypt ----------
+function b64(s) { var b = atob(s), u = new Uint8Array(b.length); for (var i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); return u; }
+async function fetchBlob() {
+  try {
+    var r = await fetch(API + "&t=" + Date.now(), { headers: { Accept: "application/vnd.github.raw" }, cache: "no-store" });
+    if (r.ok) return await r.json();
+  } catch (e) {}
+  var r2 = await fetch(RAW + "?t=" + Date.now(), { cache: "no-store" });
+  if (!r2.ok) throw new Error("data not found (" + r2.status + ")");
+  return await r2.json();
+}
+async function decrypt(blob, pw) {
+  var base = await crypto.subtle.importKey("raw", new TextEncoder().encode(pw), "PBKDF2", false, ["deriveKey"]);
+  var key = await crypto.subtle.deriveKey({ name: "PBKDF2", salt: b64(blob.salt), iterations: blob.iter, hash: "SHA-256" },
+    base, { name: "AES-GCM", length: 256 }, false, ["decrypt"]);
+  var plain = await crypto.subtle.decrypt({ name: "AES-GCM", iv: b64(blob.iv) }, key, b64(blob.ct));
+  var ds = new Blob([plain]).stream().pipeThrough(new DecompressionStream("gzip"));
+  return JSON.parse(await new Response(ds).text());
+}
+async function load(pw) {
+  var blob = await fetchBlob();
+  if (!blob || !blob.ct) throw new Error("no data yet - start Juice Website.command on the Mac");
+  if (DATA && blob.t === LAST_T) return false;
+  var d = await decrypt(blob, pw);
+  DATA = d; LAST_T = blob.t; return true;
+}
+
+// ---------- formatting ----------
+function n(x) { return (x === null || x === undefined || x === "" || (typeof x === "number" && isNaN(x))) ? null : Number(x); }
+function f(x, d) { var v = n(x); return v === null ? "-" : v.toFixed(d === undefined ? 2 : d); }
+function f0(x) { var v = n(x); return v === null ? "-" : Math.round(v).toLocaleString("en-IN"); }
+function pc(x, d) { var v = n(x); return v === null ? "-" : v.toFixed(d || 0) + "%"; }
+function esc(s) { return String(s === null || s === undefined ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+var BAD = { PEAK: "#0a7d32", OK: "#c47a00", GONE: "#b3261e", GOOD: "#0a7d32", THIN: "#b3261e" };
+function badge(s, col) { return s && s !== "-" ? '<span class="b" style="background:' + (col || BAD[s] || "#777") + '">' + esc(s) + "</span>" : '<span class="m">-</span>'; }
+function liq(s) { return s === "OK" ? '<span class="b" style="background:#c47a00">OK</span>' : badge(s); }
+function touchc(x) { var v = n(x); return v === null ? "m" : (v <= 20 ? "g" : (v <= 35 ? "a" : "r")); }
+function topc(x) { var v = n(x); return v === null ? "m" : (v >= 95 ? "g" : (v >= 80 ? "a" : "r")); }
+function heat(v, max) {
+  v = n(v); if (v === null) return '<span class="m">-</span>';
+  if (v <= 0) return '<span class="heat" style="background:#f6d3cf;color:#7a1a12">' + Math.round(v) + "</span>";
+  var t = Math.max(0, Math.min(1, v / (max || 1)));
+  var c = [Math.round(255 + (34 - 255) * t), Math.round(248 + (139 - 248) * t), Math.round(214 + (70 - 214) * t)];
+  return '<span class="heat" style="background:rgb(' + c.join(",") + ');color:' + (t > 0.55 ? "#fff" : "#222") + '">' + Math.round(v) + "</span>";
+}
+function sell(u, label) { return u ? '<a class="sell" href="' + esc(u) + '" target="_blank" rel="noopener noreferrer">' + (label || "SELL") + "</a>" : ""; }
+var SHORT = [["P(touch)>35", "touch>35%"], ["CE ROI>3", "ROI>3%"], ["PE ROI<2.5", "ROI<2.5%"], ["prem<2000", "prem<2k"], ["IV/HV<0.85", "IV low"]];
+function why(s) {
+  return String(s || "").split(",").map(function (p) {
+    p = p.trim(); for (var i = 0; i < SHORT.length; i++) if (p.indexOf(SHORT[i][0]) === 0) return SHORT[i][1];
+    if (p.indexOf("spread") === 0) return "wide spread"; if (p.indexOf("OI ") === 0) return "low OI"; return p;
+  }).filter(Boolean).join(", ");
+}
+function dmy(s) { if (!s) return "-"; var d = new Date(String(s).slice(0, 10) + "T00:00:00"); return isNaN(d) ? s : d.toLocaleDateString("en-GB", { day: "2-digit", month: "short" }); }
+
+// ---------- sortable table ----------
+var SORT = {};
+try { SORT = JSON.parse(store("juice_sort") || "{}") || {}; } catch (e) { SORT = {}; }
+function table(el, id, cols, rows, rowcls, defSort) {
+  var st = SORT[id] || defSort || null;
+  var data = rows.slice();
+  if (st) {
+    var c = cols.filter(function (x) { return x.k === st.k; })[0];
+    if (c) {
+      var get = c.sv || function (r) { return r[c.k]; };
+      data.sort(function (a, b) {
+        var x = get(a), y = get(b);
+        if (x === null || x === undefined || x === "" || (typeof x === "number" && isNaN(x))) return 1;
+        if (y === null || y === undefined || y === "" || (typeof y === "number" && isNaN(y))) return -1;
+        var r = (typeof x !== "string" && typeof y !== "string") ? (Number(x) - Number(y)) : String(x).localeCompare(String(y));
+        return st.d === "asc" ? r : -r;
+      });
+    }
+  }
+  var h = "<table><thead><tr>" + cols.map(function (c) {
+    var on = st && st.k === c.k;
+    return '<th class="' + (c.a || "") + (on ? " sorted" : "") + '" data-k="' + c.k + '">' + c.t +
+      '<span class="ar">' + (on ? (st.d === "asc" ? "&#9650;" : "&#9660;") : "&#8693;") + "</span></th>";
+  }).join("") + "</tr></thead><tbody>";
+  h += data.map(function (r) {
+    return '<tr class="' + (rowcls ? rowcls(r) : "") + '">' + cols.map(function (c) {
+      return '<td class="' + (c.a || "") + '">' + (c.f ? c.f(r) : esc(r[c.k])) + "</td>";
+    }).join("") + "</tr>";
+  }).join("") + "</tbody></table>";
+  if (!data.length) h += '<div class="note" style="padding:10px">Nothing to show with these filters.</div>';
+  el.innerHTML = h;
+  el.querySelectorAll("th").forEach(function (t) {
+    t.onclick = function () {
+      var k = t.getAttribute("data-k"), c = cols.filter(function (x) { return x.k === k; })[0];
+      var cur = SORT[id] || defSort;
+      var d = (cur && cur.k === k) ? (cur.d === "asc" ? "desc" : "asc") : (c && c.txt ? "asc" : "desc");
+      SORT[id] = { k: k, d: d }; store("juice_sort", JSON.stringify(SORT)); render();
+    };
+  });
+}
+
+// ---------- tabs ----------
+var TAB = store("juice_tab") || "top";
+document.querySelectorAll("nav button[data-tab]").forEach(function (b) {
+  b.onclick = function () { TAB = b.getAttribute("data-tab"); store("juice_tab", TAB); showTab(); };
+});
+function showTab() {
+  ["top", "lad", "jl"].forEach(function (t) { $("tab-" + t).classList.toggle("hide", t !== TAB); });
+  document.querySelectorAll("nav button[data-tab]").forEach(function (b) { b.classList.toggle("on", b.getAttribute("data-tab") === TAB); });
+  render();
+}
+
+// ---------- renderers ----------
+function header() {
+  var live = DATA.live;
+  $("livep").textContent = live ? "LIVE" : "MARKET CLOSED"; $("livep").style.background = live ? "#0a7d32" : "#8a6d00";
+  var g = new Date(String(DATA.generated).replace(" ", "T") + "+05:30");
+  var mins = Math.round((Date.now() - g.getTime()) / 60000);
+  $("agep").textContent = "updated " + String(DATA.generated).slice(11, 16) + " IST" + (mins >= 1 ? " (" + mins + " min ago)" : "");
+  $("sub").textContent = "Ladders " + (DATA.ladder_generated || "-") + " - Juice Live " + (DATA.juice_generated || "-") +
+    (DATA.kite ? "" : " - Kite SELL links off");
+  var ist = new Date(Date.now() + 330 * 60000), hm = ist.getUTCHours() * 100 + ist.getUTCMinutes(), wd = ist.getUTCDay();
+  var mkt = wd >= 1 && wd <= 5 && hm >= 915 && hm <= 1530;
+  var s = $("stale");
+  if (mkt && mins > 10) { s.textContent = "Data is " + mins + " min old. Is the Mac running Juice Website.command?"; s.classList.remove("hide"); }
+  else if (!live) { s.textContent = "Market closed: these are last-session prices. 'vs top' and Status fill in after 09:15."; s.classList.remove("hide"); }
+  else s.classList.add("hide");
+}
+
+function renderTop() {
+  var t = DATA.top10;
+  if (!t) { $("toptable").innerHTML = '<div class="note" style="padding:10px">No top-10 list yet.</div>'; return; }
+  var st = t.file.replace("top10_", "").replace(".csv", "");
+  $("topmeta").innerHTML = "Scanner list <b>" + st.slice(6, 8) + "/" + st.slice(4, 6) + " " + st.slice(9, 11) + ":" + st.slice(11, 13) +
+    " IST</b> (Rule C). <b>Ladder says</b> = today's live check with Juice Live rules.";
+  var max = Math.max.apply(null, t.rows.map(function (r) { return n(r.kept) || 0; }).concat([1]));
+  table($("toptable"), "top", [
+    { k: "rank", t: "#", a: "c" },
+    { k: "stock", t: "Option", a: "l", txt: 1, f: function (r) { return '<span class="opt" data-s="' + esc(r.stock) + '">' + esc(r.stock) + " " + r.strike + " " + r.type + "</span>"; } },
+    { k: "expiry", t: "Exp", a: "c", txt: 1, f: function (r) { return dmy(r.expiry); } },
+    { k: "bid", t: "Bid", f: function (r) { return f(r.bid); } },
+    { k: "prem", t: "Prem/lot", f: function (r) { return f0(r.prem); } },
+    { k: "now_top", t: "vs top", f: function (r) { return '<span class="k ' + topc(r.now_top) + '">' + pc(r.now_top) + "</span>"; } },
+    { k: "status", t: "Status", a: "c", txt: 1, f: function (r) { return badge(r.status); } },
+    { k: "roi", t: "ROI%", f: function (r) { return f(r.roi); } },
+    { k: "edge", t: "Edge%", f: function (r) { return f(r.edge); } },
+    { k: "touch", t: "Touch", f: function (r) { return '<span class="k ' + touchc(r.touch) + '">' + pc(r.touch) + "</span>"; } },
+    { k: "kept", t: "KEPT", a: "c", f: function (r) { return heat(r.kept, max); } },
+    { k: "liq", t: "Liq", a: "c", txt: 1, f: function (r) { return liq(r.liq); } },
+    { k: "ok", t: "Ladder says", a: "l", sv: function (r) { return r.ok ? 1 : 0; },
+      f: function (r) { return (r.ok ? badge("PASS", "#0a7d32") : '<span class="why r">' + esc(why(r.why)) + "</span>") +
+        (r.juice_gone ? ' <span class="a k">juice gone</span>' : "") + (r.held ? ' <span class="a k">you hold</span>' : ""); } },
+    { k: "url", t: "Kite", a: "c", sv: function (r) { return r.url ? 1 : 0; }, f: function (r) { return sell(r.url); } }
+  ], t.rows, function (r) { return r.ok ? "pass" : ""; }, { k: "rank", d: "asc" });
+  $("toptable").querySelectorAll(".opt").forEach(function (o) {
+    o.onclick = function () { LADSYM = o.getAttribute("data-s"); TAB = "lad"; store("juice_tab", TAB); showTab(); };
+  });
+  $("basket").innerHTML = DATA.basket_url ? sell(DATA.basket_url, "Top 3 &rarr; one Kite basket (1 lot each)").replace('class="sell"', 'class="sell big"') : "";
+}
+
+var LADCOLS = function (max) { return [
+  { k: "strike", t: "Strike", f: function (r) { return '<span class="k">' + r.strike + "</span>"; } },
+  { k: "otm", t: "OTM%", f: function (r) { return f(r.otm, 1); } },
+  { k: "sigma", t: "&sigma;", f: function (r) { return f(r.sigma, 1); } },
+  { k: "bid", t: "Bid", f: function (r) { return f(r.bid); } },
+  { k: "ask", t: "Ask", f: function (r) { return f(r.ask); } },
+  { k: "prem", t: "Prem/lot", f: function (r) { return '<span class="' + ((n(r.prem) || 0) < 2000 ? "m" : "") + '">' + f0(r.prem) + "</span>"; } },
+  { k: "now_top", t: "vs top", f: function (r) { return '<span class="k ' + topc(r.now_top) + '">' + pc(r.now_top) + "</span>"; } },
+  { k: "status", t: "Status", a: "c", txt: 1, f: function (r) { return badge(r.status); } },
+  { k: "theta_lot", t: "Decay/d", f: function (r) { return f0(r.theta_lot); } },
+  { k: "margin", t: "Margin", f: function (r) { return f0(r.margin); } },
+  { k: "roi", t: "ROI%", f: function (r) { return f(r.roi); } },
+  { k: "gross", t: "Gross", f: function (r) { return f0(r.gross); } },
+  { k: "excess", t: "Excess", f: function (r) { return pc(r.excess); } },
+  { k: "kept", t: "KEPT", a: "c", f: function (r) { return heat(r.kept, max); } },
+  { k: "p_touch", t: "Touch", f: function (r) { return '<span class="k ' + touchc(r.p_touch) + '">' + pc(r.p_touch) + "</span>"; } },
+  { k: "p_loss", t: "Loss%", f: function (r) { return pc(r.p_loss); } },
+  { k: "ev", t: "EV/lot", f: function (r) { var v = n(r.ev); return v === null ? "-" : '<span class="' + (v < 0 ? "r" : "") + '">' + (v > 0 ? "+" : "") + Math.round(v) + "</span>"; } },
+  { k: "spread", t: "Spread", f: function (r) { return pc(r.spread, 1); } },
+  { k: "oi_lots", t: "OI lots", f: function (r) { return f0(r.oi_lots); } },
+  { k: "oi_chg", t: "OI chg", f: function (r) { var v = n(r.oi_chg); return v === null ? "-" : (v > 0 ? "+" : "") + Math.round(v).toLocaleString("en-IN"); } },
+  { k: "vol_lots", t: "Vol lots", f: function (r) { return f0(r.vol_lots); } },
+  { k: "traded_lakh", t: "Traded &#8377;L", f: function (r) { return f(r.traded_lakh, 1); } },
+  { k: "liq", t: "Liq", a: "c", txt: 1, f: function (r) { return liq(r.liq); } },
+  { k: "ok", t: "Verdict", a: "l", sv: function (r) { return r.ok ? 1 : 0; },
+    f: function (r) { return (r.pick ? badge("PICK #" + r.pick, "#1a5fb4") + " " : "") + (r.ok ? badge("PASS", "#0a7d32") + (r.best ? " " + badge("BEST", "#005a28") : "") : '<span class="why">' + esc(why(r.why)) + "</span>") + (r.held ? ' <span class="a k">YOU HOLD</span>' : ""); } },
+  { k: "url", t: "Kite", a: "c", sv: function (r) { return r.url ? 1 : 0; }, f: function (r) { return sell(r.url); } }
+]; };
+
+function renderLad() {
+  var L = DATA.ladders || [];
+  if (!L.length) { $("ladce").innerHTML = '<div class="note" style="padding:10px">No ladders yet.</div>'; $("ladpe").innerHTML = ""; return; }
+  var syms = L.map(function (b) { return b.meta.sym; });
+  if (!LADSYM || syms.indexOf(LADSYM) < 0) LADSYM = store("juice_ladsym"); if (!LADSYM || syms.indexOf(LADSYM) < 0) LADSYM = syms[0];
+  store("juice_ladsym", LADSYM);
+  $("ladchips").innerHTML = L.map(function (b) {
+    var np = b.rows.filter(function (r) { return r.ok; }).length;
+    return '<button class="chip' + (b.meta.sym === LADSYM ? " on" : "") + '" data-s="' + esc(b.meta.sym) + '">' + esc(b.meta.sym) +
+      '<span class="dot" style="background:' + (np ? "#0a7d32" : "#b3261e") + '" title="' + np + ' pass"></span></button>';
+  }).join("");
+  $("ladchips").querySelectorAll(".chip").forEach(function (c) { c.onclick = function () { LADSYM = c.getAttribute("data-s"); store("juice_ladsym", LADSYM); renderLad(); }; });
+  var b = L.filter(function (x) { return x.meta.sym === LADSYM; })[0], m = b.meta;
+  var chg = n(m.prev_spot) ? (m.spot / m.prev_spot - 1) * 100 : null;
+  $("ladmeta").innerHTML = "<b>" + esc(m.sym) + "</b> spot <b>" + f(m.spot) + "</b> " + (chg === null ? "" : '<span class="' + (chg >= 0 ? "g" : "r") + '">' + (chg >= 0 ? "+" : "") + chg.toFixed(1) + "%</span>") +
+    " - expiry " + dmy(m.exp) + " - " + m.Hs + " sessions left - exit by " + dmy(m.exit_by) + " - ATM IV " + pc(n(m.atm_iv) * 100) + " - HV20 " + pc(n(m.hv20) * 100) +
+    " - 1&sigma; " + f0(m.sd1) + " pts" + (m.event ? ' - <span class="r k">RESULTS ' + esc(m.event) + "</span>" : "");
+  var side = $("ladside").value, onlyPass = $("ladpass").checked, noGone = $("ladgone").checked;
+  var max = Math.max.apply(null, b.rows.map(function (r) { return n(r.kept) || 0; }).concat([1]));
+  var cls = function (r) { return (r.best ? "best" : (r.ok ? "pass" : (r.held ? "held" : ""))) + (r.pick ? " pick" : ""); };
+  ["CE", "PE"].forEach(function (t) {
+    var show = side === "both" || side === t;
+    $("lad" + t.toLowerCase()).classList.toggle("hide", !show); $("h-" + t.toLowerCase()).classList.toggle("hide", !show);
+    if (!show) return;
+    var rows = b.rows.filter(function (r) { return r.type === t && (!onlyPass || r.ok) && (!noGone || r.status !== "GONE"); });
+    table($("lad" + t.toLowerCase()), "lad" + t, LADCOLS(max), rows, cls, { k: "otm", d: "asc" });
+  });
+}
+
+function renderJL() {
+  var rows = DATA.juice || [], jm = DATA.juice_meta || {};
+  $("jlmeta").innerHTML = rows.length ? ("Juice Live " + esc(DATA.juice_generated || "") + " - scan " + esc(jm.scan || "-") + " - rules: " + esc(jm.rules || "-")) :
+    "No Juice Live data yet (start Juice Live during market hours).";
+  var q = $("jlq").value.trim().toUpperCase(), side = $("jlside").value, onlyPass = $("jlpass").checked, noGone = $("jlgone").checked, mn = n($("jlmin").value) || 0;
+  var fr = rows.filter(function (r) {
+    return (!q || String(r.stock).indexOf(q) >= 0) && (!side || r.type === side) && (!onlyPass || r.ok) && (!noGone || r.status !== "GONE") && (n(r.prem) || 0) >= mn;
+  });
+  $("jlcount").textContent = fr.length + " of " + rows.length + " strikes";
+  var max = Math.max.apply(null, fr.map(function (r) { return n(r.kept) || 0; }).concat([1]));
+  table($("jltable"), "jl", [
+    { k: "stock", t: "Option", a: "l", txt: 1, sv: function (r) { return r.stock + " " + r.type + " " + String(1e6 + r.strike); },
+      f: function (r) { return '<span class="k">' + esc(r.stock) + " " + r.strike + " " + r.type + '</span> <span class="m">' + dmy(r.expiry) + "</span>"; } },
+    { k: "spot", t: "Spot", f: function (r) { return f(r.spot); } },
+    { k: "otm", t: "OTM%", f: function (r) { return f(r.otm, 1); } },
+    { k: "bid", t: "Bid", f: function (r) { return f(r.bid); } },
+    { k: "prem", t: "Prem/lot", f: function (r) { return f0(r.prem); } },
+    { k: "off_hi", t: "Off high", f: function (r) { var v = n(r.off_hi); return '<span class="k ' + (v === null ? "m" : (v <= 5 ? "g" : (v >= 20 ? "r" : "a"))) + '">' + pc(v) + "</span>"; } },
+    { k: "status", t: "Status", a: "c", txt: 1, f: function (r) { return badge(r.status); } },
+    { k: "gross", t: "Gross", f: function (r) { return f0(r.gross); } },
+    { k: "excess", t: "Excess", f: function (r) { return pc(r.excess); } },
+    { k: "kept", t: "KEPT", a: "c", f: function (r) { return heat(r.kept, max); } },
+    { k: "roi", t: "ROI%", f: function (r) { return f(r.roi); } },
+    { k: "p_touch", t: "Touch", f: function (r) { return '<span class="k ' + touchc(r.p_touch) + '">' + pc(r.p_touch) + "</span>"; } },
+    { k: "margin", t: "Margin", f: function (r) { return f0(r.margin) + (r.mtag ? ' <span class="m">est</span>' : ""); } },
+    { k: "spread", t: "Spread", f: function (r) { return pc(r.spread, 1); } },
+    { k: "oi_lots", t: "OI lots", f: function (r) { return f0(r.oi_lots); } },
+    { k: "ok", t: "Verdict", a: "l", sv: function (r) { return r.ok ? 1 : 0; }, f: function (r) { return r.ok ? badge("PASS", "#0a7d32") : '<span class="why">' + esc(why(r.why)) + "</span>"; } },
+    { k: "url", t: "Kite", a: "c", sv: function (r) { return r.url ? 1 : 0; }, f: function (r) { return sell(r.url); } }
+  ], fr, function (r) { return r.ok ? "pass" : ""; }, { k: "kept", d: "desc" });
+}
+
+function render() {
+  if (!DATA) return;
+  header();
+  if (TAB === "top") renderTop(); else if (TAB === "lad") renderLad(); else renderJL();
+}
+["ladside", "ladpass", "ladgone", "jlside", "jlpass", "jlgone", "jlmin"].forEach(function (id) { $(id).onchange = render; });
+$("jlq").oninput = render;
+
+// ---------- unlock + auto refresh ----------
+async function unlock(pw, quiet) {
+  $("err").textContent = quiet ? "" : "Unlocking...";
+  try {
+    await load(pw); PW = pw;
+    if ($("rem").checked) store("juice_pw", pw); else store("juice_pw", null);
+    $("lock").classList.add("hide"); $("app").classList.remove("hide"); showTab();
+    return true;
+  } catch (e) {
+    $("err").textContent = (e && e.name === "OperationError") ? "Wrong password." : ("Could not load: " + (e && e.message ? e.message : e));
+    return false;
+  }
+}
+$("go").onclick = function () { unlock($("pw").value); };
+$("pw").onkeydown = function (e) { if (e.key === "Enter") unlock($("pw").value); };
+$("refresh").onclick = async function () { try { if (await load(PW)) render(); else header(); } catch (e) {} };
+var saved = store("juice_pw");
+if (saved) unlock(saved, true);
+setInterval(async function () { if (!PW) return; try { if (await load(PW)) render(); else header(); } catch (e) {} }, 60000);
+})();
+</script>
+</body>
+</html>
