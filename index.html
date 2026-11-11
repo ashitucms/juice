@@ -69,6 +69,11 @@ details.tl summary::-webkit-details-marker{display:none}
 details.tl summary .rk{display:inline-block;min-width:30px;font-weight:800;color:var(--blue)}
 details.tl summary .sm{font-size:12px;color:var(--mut);margin-left:30px;margin-top:3px}
 details.tl .in{padding:0 10px 10px}
+.cm{white-space:normal;min-width:250px;max-width:430px;font-size:12px;text-align:left;line-height:1.4}
+.cm .g,.cm .r{white-space:nowrap}
+.stars{color:#e0a100;letter-spacing:-1px;font-size:14px}
+.stars .e{color:#c9ced6}
+.rank{font-weight:800;color:var(--blue);font-size:14px}
 .gr{display:inline-block;width:16px;text-align:center;border-radius:3px;font-size:10px;font-weight:800;color:#fff;margin-right:1px;line-height:16px}
 .gA{background:#0a7d32}.gB{background:#c47a00}.gC{background:#b3261e}.gN{background:#9aa5b4}
 .gbig{display:inline-block;min-width:22px;text-align:center;border-radius:4px;font-weight:800;color:#fff;padding:0 5px;margin-right:5px;font-size:13px}
@@ -101,7 +106,7 @@ details.tl .in{padding:0 10px 10px}
   <div class="sub" id="sub"></div>
   <nav>
     <button data-tab="top" class="on">Top 10</button>
-    <button data-tab="tl">Top 10 + Ladders</button>
+    <button data-tab="tl">Top 10 Ladders (ranked)</button>
     <button data-tab="aCE">All CE strikes</button>
     <button data-tab="aPE">All PE strikes</button>
     <button data-tab="lad">Ladder</button>
@@ -139,16 +144,21 @@ details.tl .in{padding:0 10px 10px}
 
   <section id="tab-tl" class="hide">
     <div class="card">
-      <div class="meta">Each top-10 pick with the other strikes of the same stock and side: juice, risk and liquidity for every strike. The pick row has a blue edge.</div>
+      <div class="meta"><b>Top 10 ladders - ONE table, ranked.</b> Every strike of all top-10 stocks (CE and PE together). Rank = Rating, best first. <b>Why</b> says in plain words what is good (&#10004;) and weak (&#10006;). Blue edge = the scanner's pick.</div>
+      <div class="chips" id="tlchips"></div>
       <div class="bar">
-        <label><input type="checkbox" id="tlboth"> show both CE and PE</label>
+        <label>Side <select id="tlside"><option value="">CE + PE</option><option value="CE">CE only</option><option value="PE">PE only</option></select></label>
+        <label>Rating <select id="tlstars"><option value="">any</option><option value="2">&#9733;&#9733; or more</option><option value="3">&#9733;&#9733;&#9733; or more</option><option value="4">&#9733;&#9733;&#9733;&#9733; or more</option><option value="5">&#9733;&#9733;&#9733;&#9733;&#9733; only</option></select></label>
         <label><input type="checkbox" id="tlpass"> PASS only</label>
-        <label><input type="checkbox" id="tlgone"> hide GONE</label>
-        <button class="chip" id="tlopen">open all</button><button class="chip" id="tlclose">close all</button>
+        <label><input type="checkbox" id="tlgone" checked> hide GONE</label>
+        <label>min &#8377;/lot <input type="number" id="tlmin" value="2000" step="500" style="width:86px"></label>
+        <label>max touch % <input type="number" id="tltouch" value="35" step="5" style="width:70px"></label>
+        <label>min OTM % <input type="number" id="tlotm" value="0" step="0.5" style="width:70px"></label>
+        <span class="note" id="tlcount"></span>
       </div>
-      <div class="note">Sorting is shared: tap a column name in any table and all 10 tables sort the same way.</div>
+      <div class="wrap" id="tltable"></div>
+      <div class="note">Rating 0-100 (each &#9733; = 20 points): 70% from the six grades (L R P S K J) + 30% from KEPT juice. Strikes blocked by the rules are capped at 45. GONE (juice already fell 20%+ from today's top) -15. Scanner pick +5 (it passed the 2-year backtest rules). The Grade filter at the top also applies. Tap any column name to sort it your way.</div>
     </div>
-    <div id="tlwrap"></div>
   </section>
 
   <section id="tab-aCE" class="hide">
@@ -161,6 +171,7 @@ details.tl .in{padding:0 10px 10px}
         <label>min &#8377;/lot <input type="number" id="aCEmin" value="2000" step="500" style="width:86px"></label>
         <label>max touch % <input type="number" id="aCEtouch" value="35" step="5" style="width:70px"></label>
         <label>min OTM % <input type="number" id="aCEotm" value="0" step="0.5" style="width:70px"></label>
+        <label>Rating <select id="aCEstars"><option value="">any</option><option value="2">&#9733;&#9733; or more</option><option value="3">&#9733;&#9733;&#9733; or more</option><option value="4">&#9733;&#9733;&#9733;&#9733; or more</option><option value="5">&#9733;&#9733;&#9733;&#9733;&#9733; only</option></select></label>
         <span class="note" id="aCEcount"></span>
       </div>
       <div class="wrap" id="aCEtable"></div>
@@ -177,6 +188,7 @@ details.tl .in{padding:0 10px 10px}
         <label>min &#8377;/lot <input type="number" id="aPEmin" value="2000" step="500" style="width:86px"></label>
         <label>max touch % <input type="number" id="aPEtouch" value="35" step="5" style="width:70px"></label>
         <label>min OTM % <input type="number" id="aPEotm" value="0" step="0.5" style="width:70px"></label>
+        <label>Rating <select id="aPEstars"><option value="">any</option><option value="2">&#9733;&#9733; or more</option><option value="3">&#9733;&#9733;&#9733; or more</option><option value="4">&#9733;&#9733;&#9733;&#9733; or more</option><option value="5">&#9733;&#9733;&#9733;&#9733;&#9733; only</option></select></label>
         <span class="note" id="aPEcount"></span>
       </div>
       <div class="wrap" id="aPEtable"></div>
@@ -523,68 +535,63 @@ function renderLad() {
   });
 }
 
-function renderTL() {
-  var t = DATA.top10, W = $("tlwrap");
-  if (!t) { W.innerHTML = '<div class="card note">No top-10 list yet.</div>'; return; }
-  var both = $("tlboth").checked, onlyPass = $("tlpass").checked, noGone = $("tlgone").checked;
-  var blocks = {}; (DATA.ladders || []).forEach(function (b) { blocks[b.meta.sym] = b; });
-  var tmax = Math.max.apply(null, t.rows.map(function (r) { return n(r.kept) || 0; }).concat([1]));
-  W.innerHTML = t.rows.map(function (p) {
-    var b = blocks[p.stock];
-    var head = '<span class="rk">#' + p.rank + "</span><b>" + esc(p.stock) + " " + p.strike + " " + p.type + "</b> " +
-      '<span class="m">' + dmy(p.expiry) + "</span> &nbsp; bid <b>" + f(p.bid) + "</b> - &#8377;" + f0(p.prem) + "/lot - KEPT " + heat(p.kept, tmax) +
-      " " + (p.ok ? badge("PASS", "#0a7d32") : '<span class="why r">' + esc(why(p.why)) + "</span>") +
-      (p.juice_gone ? ' <span class="a k">juice gone</span>' : "");
-    var sm = "";
-    if (b) {
-      var m = b.meta, chg = n(m.prev_spot) ? (m.spot / m.prev_spot - 1) * 100 : null;
-      sm = "spot " + f(m.spot) + (chg === null ? "" : " (" + (chg >= 0 ? "+" : "") + chg.toFixed(1) + "%)") + " - " + m.Hs + " sessions - exit by " + dmy(m.exit_by) +
-        " - ATM IV " + pc(n(m.atm_iv) * 100) + " - HV20 " + pc(n(m.hv20) * 100) + " - scanner ROI " + f(p.roi) + "% edge " + f(p.edge) + "% touch " + pc(p.touch) +
-        (m.event ? ' - <span class="r k">RESULTS ' + esc(m.event) + "</span>" : "");
-    } else sm = "no ladder for this stock yet";
-    return '<details class="tl" data-rank="' + p.rank + '"' + (TLCLOSED[p.rank] ? "" : " open") + "><summary>" + head + '<div class="sm">' + sm + "</div></summary>" +
-      '<div class="in"><div class="wrap" id="tl-' + p.rank + '"></div></div></details>';
-  }).join("");
-  t.rows.forEach(function (p) {
-    var b = blocks[p.stock], el = $("tl-" + p.rank);
-    if (!b || !el) return;
-    var rows = b.rows.filter(function (r) { return (both || r.type === p.type) && (!onlyPass || r.ok) && (!noGone || r.status !== "GONE") && gpass(r); });
-    var max = Math.max.apply(null, b.rows.map(function (r) { return n(r.kept) || 0; }).concat([1]));
-    var cls = function (r) { return (r.best ? "best" : (r.ok ? "pass" : (r.held ? "held" : ""))) + ((Number(r.strike) === Number(p.strike) && r.type === p.type) ? " pick" : ""); };
-    var cols = LADCOLS(max);
-    if (both) cols.splice(1, 0, { k: "type", t: "Type", a: "c", txt: 1, f: function (r) { return '<span class="k">' + r.type + "</span>"; } });
-    table(el, "tl", cols, rows, cls, { k: "otm", d: "asc" });
-  });
-  W.querySelectorAll("details.tl").forEach(function (d) {
-    d.addEventListener("toggle", function () {
-      var rk = d.getAttribute("data-rank"); if (d.open) delete TLCLOSED[rk]; else TLCLOSED[rk] = 1;
-      store("juice_tlclosed", JSON.stringify(TLCLOSED));
-    });
-  });
+function rating(r) {
+  var g = grade(r), k = Math.max(0, n(r.kept) || 0);
+  var v = g.score * 0.7 + Math.min(k, 300) / 300 * 30;
+  if (!r.ok) v = Math.min(v, 45);
+  if (r.status === "GONE") v -= 15;
+  if (r.pick) v += 5;
+  return Math.max(0, Math.min(100, Math.round(v)));
+}
+function starcell(v) {
+  var k = Math.max(1, Math.ceil(v / 20)), on = "", off = "";
+  for (var i = 0; i < 5; i++) { if (i < k) on += "&#9733;"; else off += "&#9733;"; }
+  return '<span class="stars">' + on + '<span class="e">' + off + "</span></span> <b>" + v + "</b>";
+}
+function comment(r) {
+  var g = grade(r), plus = [], minus = [], w = String(r.why || "");
+  if (r.ok) plus.push("passes all your rules"); else minus.push("blocked: " + why(w));
+  if (r.pick) plus.push("scanner pick #" + r.pick + " (backtested)");
+  if (r.best) plus.push("most juice of its stock+side");
+  if (g.K === "A") plus.push("high juice, KEPT " + Math.round(n(r.kept)));
+  else if (g.K === "C") minus.push("little juice, KEPT " + (n(r.kept) === null ? "-" : Math.round(n(r.kept))));
+  if (g.S === "A") plus.push("safe, touch " + pc(r.p_touch));
+  else if (g.S === "C" && w.indexOf("P(touch)") < 0) minus.push("risky, touch " + pc(r.p_touch));
+  if (g.L === "A") plus.push("very liquid");
+  else if (g.L === "C" && w.indexOf("spread") < 0 && w.indexOf("OI ") < 0) minus.push("thin market");
+  if (g.P === "A") plus.push("big premium &#8377;" + f0(r.prem));
+  else if (g.P === "C" && w.indexOf("prem<") < 0) minus.push("small premium &#8377;" + f0(r.prem));
+  if (g.R === "A") plus.push("ROI " + f(r.roi) + "% in the sweet spot");
+  if (g.J === "A") plus.push("still at today's top");
+  else if (g.J === "C") minus.push("juice falling: " + pc(r.now_top) + " of today's top");
+  return plus.map(function (x) { return '<span class="g">&#10004; ' + x + "</span>"; })
+    .concat(minus.map(function (x) { return '<span class="r">&#10006; ' + x + "</span>"; })).join(" &middot; ");
 }
 
-function renderAll(typ) {
-  var L = DATA.ladders || [], el = $("a" + typ + "table");
+function renderBest(pfx, fixedSide) {
+  var L = DATA.ladders || [], el = $(pfx + "table");
   if (!L.length) { el.innerHTML = '<div class="note" style="padding:10px">No ladders yet.</div>'; return; }
-  var off = AOFF[typ];
-  $("a" + typ + "chips").innerHTML = '<button class="chip" data-s="*">all</button>' + L.map(function (b) {
-    var sym = b.meta.sym, np = b.rows.filter(function (r) { return r.type === typ && r.ok; }).length;
+  var side = fixedSide || $(pfx + "side").value, key = fixedSide || "ALL";
+  var off = AOFF[key] || (AOFF[key] = {});
+  $(pfx + "chips").innerHTML = '<button class="chip" data-s="*">all</button>' + L.map(function (b) {
+    var sym = b.meta.sym, np = b.rows.filter(function (r) { return (!side || r.type === side) && r.ok; }).length;
     return '<button class="chip' + (off[sym] ? "" : " on") + '" data-s="' + esc(sym) + '">' + esc(sym) +
       '<span class="dot" style="background:' + (np ? "#0a7d32" : "#b3261e") + '" title="' + np + ' pass"></span></button>';
   }).join("");
-  $("a" + typ + "chips").querySelectorAll(".chip").forEach(function (c) {
+  $(pfx + "chips").querySelectorAll(".chip").forEach(function (c) {
     c.onclick = function () {
       var sym = c.getAttribute("data-s");
-      if (sym === "*") { AOFF[typ] = {}; } else { if (AOFF[typ][sym]) delete AOFF[typ][sym]; else AOFF[typ][sym] = 1; }
+      if (sym === "*") { AOFF[key] = {}; } else { if (AOFF[key][sym]) delete AOFF[key][sym]; else AOFF[key][sym] = 1; }
       store("juice_aoff", JSON.stringify(AOFF)); render();
     };
   });
-  var onlyPass = $("a" + typ + "pass").checked, noGone = $("a" + typ + "gone").checked;
-  var mn = n($("a" + typ + "min").value) || 0, mt = n($("a" + typ + "touch").value), mo = n($("a" + typ + "otm").value) || 0;
+  var onlyPass = $(pfx + "pass").checked, noGone = $(pfx + "gone").checked;
+  var mn = n($(pfx + "min").value) || 0, mt = n($(pfx + "touch").value), mo = n($(pfx + "otm").value) || 0;
+  var ms = n($(pfx + "stars").value) || 0;
   var rows = [], all = 0;
   L.forEach(function (b) {
     b.rows.forEach(function (r) {
-      if (r.type !== typ) return;
+      if (side && r.type !== side) return;
       all++;
       if (off[r.stock]) return;
       if (onlyPass && !r.ok) return;
@@ -593,17 +600,28 @@ function renderAll(typ) {
       if (mt !== null && n(r.p_touch) !== null && n(r.p_touch) > mt) return;
       if ((n(r.otm) || 0) < mo) return;
       if (!gpass(r)) return;
+      r._rt = rating(r);
+      if (ms && r._rt <= (ms - 1) * 20) return;
       rows.push(r);
     });
   });
-  $("a" + typ + "count").textContent = rows.length + " of " + all + " " + typ + " strikes";
+  rows.slice().sort(function (a, b) { return b._rt - a._rt || (n(b.kept) || 0) - (n(a.kept) || 0); })
+    .forEach(function (r, i) { r._rank = i + 1; });
+  $(pfx + "count").textContent = rows.length + " of " + all + " strikes";
   var max = Math.max.apply(null, rows.map(function (r) { return n(r.kept) || 0; }).concat([1]));
-  var cols = [{ k: "stock", t: "Option", a: "l", txt: 1, sv: function (r) { return r.stock + " " + String(1e6 + Number(r.strike)); },
-    f: function (r) { return '<span class="k">' + esc(r.stock) + " " + r.strike + " " + r.type + "</span>" + (r.pick ? " " + badge("PICK #" + r.pick, "#1a5fb4") : "") +
-      ' <span class="m">' + dmy(r.expiry) + "</span>"; } }].concat(LADCOLS(max).filter(function (c) { return c.k !== "strike"; }));
+  var cols = [
+    { k: "_rank", t: "Rank", a: "c", sv: function (r) { return r._rank; }, f: function (r) { return '<span class="rank">#' + r._rank + "</span>"; } },
+    { k: "_rt", t: "Rating", a: "l", sv: function (r) { return r._rt; }, f: function (r) { return starcell(r._rt); } },
+    { k: "stock", t: "Option", a: "l", txt: 1, sv: function (r) { return r.stock + " " + r.type + " " + String(1e6 + Number(r.strike)); },
+      f: function (r) { return '<span class="k">' + esc(r.stock) + " " + r.strike + " " + r.type + "</span>" + (r.pick ? " " + badge("PICK #" + r.pick, "#1a5fb4") : "") +
+        ' <span class="m">' + dmy(r.expiry) + "</span>"; } },
+    { k: "_why", t: "Why", a: "l", sv: function (r) { return r._rt; }, f: function (r) { return '<div class="cm">' + comment(r) + "</div>"; } }
+  ].concat(LADCOLS(max).filter(function (c) { return c.k !== "strike"; }));
   var cls = function (r) { return (r.best ? "best" : (r.ok ? "pass" : (r.held ? "held" : ""))) + (r.pick ? " pick" : ""); };
-  table(el, "all" + typ, cols, rows, cls, { k: "kept", d: "desc" });
+  table(el, pfx + "best", cols, rows, cls, { k: "_rank", d: "asc" });
 }
+function renderTL() { renderBest("tl", null); }
+function renderAll(typ) { renderBest("a" + typ, typ); }
 
 function renderJL() {
   var rows = DATA.juice || [], jm = DATA.juice_meta || {};
@@ -644,16 +662,13 @@ function render() {
   header();
   if (TAB === "top") renderTop(); else if (TAB === "tl") renderTL(); else if (TAB === "aCE") renderAll("CE"); else if (TAB === "aPE") renderAll("PE"); else if (TAB === "lad") renderLad(); else renderJL();
 }
-["ladside", "ladpass", "ladgone", "jlside", "jlpass", "jlgone", "jlmin", "tlboth", "tlpass", "tlgone",
+["ladside", "ladpass", "ladgone", "jlside", "jlpass", "jlgone", "jlmin", "tlside", "tlstars", "tlpass", "tlgone", "tlmin", "tltouch", "tlotm", "aCEstars", "aPEstars",
  "aCEpass", "aCEgone", "aCEmin", "aCEtouch", "aCEotm", "aPEpass", "aPEgone", "aPEmin", "aPEtouch", "aPEotm"].forEach(function (id) { $(id).onchange = render; });
-["aCEmin", "aCEtouch", "aCEotm", "aPEmin", "aPEtouch", "aPEotm"].forEach(function (id) { $(id).oninput = render; });
+["aCEmin", "aCEtouch", "aCEotm", "aPEmin", "aPEtouch", "aPEotm", "tlmin", "tltouch", "tlotm", "jlmin"].forEach(function (id) { $(id).oninput = render; $(id).onchange = null; });
 var AOFF = { CE: {}, PE: {} };
 try { AOFF = JSON.parse(store("juice_aoff") || "") || AOFF; } catch (e) {}
-if (!AOFF.CE) AOFF.CE = {}; if (!AOFF.PE) AOFF.PE = {};
-var TLCLOSED = {};
-try { TLCLOSED = JSON.parse(store("juice_tlclosed") || "{}") || {}; } catch (e) { TLCLOSED = {}; }
-$("tlopen").onclick = function () { TLCLOSED = {}; store("juice_tlclosed", "{}"); render(); };
-$("tlclose").onclick = function () { (DATA && DATA.top10 ? DATA.top10.rows : []).forEach(function (r) { TLCLOSED[r.rank] = 1; }); store("juice_tlclosed", JSON.stringify(TLCLOSED)); render(); };
+if (!AOFF.CE) AOFF.CE = {}; if (!AOFF.PE) AOFF.PE = {}; if (!AOFF.ALL) AOFF.ALL = {};
+
 $("jlq").oninput = render;
 $("gsel").innerHTML = GK.map(function (g) {
   return '<label>' + g[1] + ' <select data-g="' + g[0] + '"><option value="">any</option><option value="B">B or better</option><option value="A">A only</option></select></label>';
