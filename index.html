@@ -75,6 +75,8 @@ details.tl .in{padding:0 10px 10px}
 .big-ix .v{font-size:24px;font-weight:800}
 .mtag{font-size:10px;font-weight:800;color:#fff;border-radius:3px;padding:0 4px;margin-left:4px}
 .mnote{white-space:normal;text-align:left;min-width:220px;font-size:12px;color:var(--a)}
+details.foot summary{cursor:pointer;font-size:13px}
+details.foot p{margin:6px 0}
 .cm{white-space:normal;min-width:250px;max-width:430px;font-size:12px;text-align:left;line-height:1.4}
 .cm .g,.cm .r{white-space:nowrap}
 .stars{color:#e0a100;letter-spacing:-1px;font-size:14px}
@@ -124,11 +126,9 @@ details.tl .in{padding:0 10px 10px}
 </header>
 <main>
   <div id="stale" class="warn hide"></div>
-  <div class="card" id="gbar">
-    <div class="bar"><b>Grade filter</b> <span class="note">A = best, C = weak. Show only rows with at least:</span></div>
-    <div class="bar" id="gsel"></div>
-    <div class="note">L = liquidity (spread, OI, volume) · R = ROI (CE 2-3% = A, PE 3.5%+ = A) · P = premium/lot (A 4,000+, B 2,000+) · S = safety (touch A &le;15%, B &le;30%) · K = KEPT juice (A 200+, B 100+) · J = juice left vs today's top (A 95%+, B 80%+). Grade column = overall score; tap it to sort.</div>
-  </div>
+  <details class="card" id="gbar"><summary style="cursor:pointer"><b>Grade filter</b> <span class="note" id="gcount">(tap to open; A = best)</span></summary>
+    <div class="bar" id="gsel" style="margin-top:8px"></div>
+  </details>
   <div id="modal" class="modal hide"><div class="box">
     <div id="mtitle" style="font-size:17px;font-weight:800"></div>
     <div class="note">Tell me what you sold. Your bot (@AshitOptionsBot) then watches it and messages you: every 10% move, every 30 min, near the strike, TP and stop.</div>
@@ -145,7 +145,6 @@ details.tl .in{padding:0 10px 10px}
     <div class="card">
       <div class="meta" id="mkmeta"></div>
       <div class="wrap" id="mktable"></div>
-      <div class="note">Day = vs yesterday's close. 3s / 6s / 10s = vs the close 3 / 6 / 10 sessions ago (today included). Streak = sessions in a row up or down. vs 20d = distance from the 20-day average. Here it refreshes every 2-3 min; on the Mac (or phone on home Wi-Fi) it updates every second: http://Ashits-Mac-mini.local:8766/market.html</div>
     </div>
   </section>
 
@@ -155,13 +154,11 @@ details.tl .in{padding:0 10px 10px}
       <div class="meta" id="topmeta"></div>
       <div class="wrap" id="toptable"></div>
       <div id="basket"></div>
-      <div class="note">Tap a column name to sort (tap again = reverse). Tap an option to open its ladder. Place orders in the Kite app.</div>
     </div>
   </section>
 
   <section id="tab-tl" class="hide">
     <div class="card">
-      <div class="meta"><b>Top 10 ladders - ONE table, ranked.</b> Every strike of all top-10 stocks (CE and PE together). Rank = Rating, best first. <b>Why</b> says in plain words what is good (&#10004;) and weak (&#10006;). Blue edge = the scanner's pick.</div>
       <div class="chips" id="tlchips"></div>
       <div class="bar">
         <label>Side <select id="tlside"><option value="">CE + PE</option><option value="CE">CE only</option><option value="PE">PE only</option></select></label>
@@ -174,13 +171,11 @@ details.tl .in{padding:0 10px 10px}
         <span class="note" id="tlcount"></span>
       </div>
       <div class="wrap" id="tltable"></div>
-      <div class="note">Rating 0-100 (each &#9733; = 20 points): 70% from the six grades (L R P S K J) + 30% from KEPT juice. Strikes blocked by the rules are capped at 45. GONE (juice already fell 20%+ from today's top) -15. Scanner pick +5 (it passed the 2-year backtest rules). The Grade filter at the top also applies. Tap any column name to sort it your way.</div>
     </div>
   </section>
 
   <section id="tab-aCE" class="hide">
     <div class="card">
-      <div class="meta"><b>CALL (CE)</b> strikes of all top-10 stocks in ONE table. Sort by any column (default: KEPT, high to low) and pick the juiciest. Blue edge = the scanner's pick.</div>
       <div class="chips" id="aCEchips"></div>
       <div class="bar">
         <label><input type="checkbox" id="aCEpass"> PASS only</label>
@@ -192,12 +187,10 @@ details.tl .in{padding:0 10px 10px}
         <span class="note" id="aCEcount"></span>
       </div>
       <div class="wrap" id="aCEtable"></div>
-      <div class="note">Grade filter (top of the page) also applies here. Tap a stock name above to hide or show it.</div>
     </div>
   </section>
   <section id="tab-aPE" class="hide">
     <div class="card">
-      <div class="meta"><b>PUT (PE)</b> strikes of all top-10 stocks in ONE table. Sort by any column (default: KEPT, high to low) and pick the juiciest. Blue edge = the scanner's pick.</div>
       <div class="chips" id="aPEchips"></div>
       <div class="bar">
         <label><input type="checkbox" id="aPEpass"> PASS only</label>
@@ -209,7 +202,6 @@ details.tl .in{padding:0 10px 10px}
         <span class="note" id="aPEcount"></span>
       </div>
       <div class="wrap" id="aPEtable"></div>
-      <div class="note">Grade filter (top of the page) also applies here. Tap a stock name above to hide or show it.</div>
     </div>
   </section>
 
@@ -224,7 +216,6 @@ details.tl .in{padding:0 10px 10px}
       </div>
       <h3 id="h-ce">CALLS (CE) - above spot</h3><div class="wrap" id="ladce"></div>
       <h3 id="h-pe">PUTS (PE) - below spot</h3><div class="wrap" id="ladpe"></div>
-      <div class="note">Green row = passes the rules (darker = best KEPT). Blue edge = the scanner's pick. vs top = premium now &divide; today's high (100% = still at the top). KEPT = &#8377; per day per &#8377;1 lakh margin you keep after expected losses (MODEL). Touch = % of past windows (2 yrs) that touched the strike.</div>
     </div>
   </section>
 
@@ -240,9 +231,20 @@ details.tl .in{padding:0 10px 10px}
         <span class="note" id="jlcount"></span>
       </div>
       <div class="wrap" id="jltable"></div>
-      <div class="note">Every candidate strike from the last full scan, priced live by Juice Live. Default sort: KEPT, high to low.</div>
     </div>
   </section>
+  <details class="card foot"><summary><b>Notes</b> - what each tab shows (tap to open)</summary>
+    <p class="note"><b>Grades:</b> L = liquidity (spread, OI, volume) · R = ROI (CE 2-3% = A, PE 3.5%+ = A) · P = premium/lot (A 4,000+, B 2,000+) · S = safety (touch A &le;15%, B &le;30%) · K = KEPT juice (A 200+, B 100+) · J = juice left vs today's top (A 95%+, B 80%+). Grade column = overall score; tap it to sort.</p>
+    <p class="note"><b>Market:</b> Day = vs yesterday's close. 3s / 6s / 10s = vs the close 3 / 6 / 10 sessions ago (today included). Streak = sessions in a row up or down. vs 20d = distance from the 20-day average. Here it refreshes every 2-3 min; on the Mac (or phone on home Wi-Fi) it updates every second: http://Ashits-Mac-mini.local:8766/market.html</p>
+    <p class="note"><b>Top 10:</b> Tap a column name to sort (tap again = reverse). Tap an option to open its ladder. Place orders in the Kite app.</p>
+    <p class="note"><b>Top 10 Ladders:</b> <b>Top 10 ladders - ONE table, ranked.</b> Every strike of all top-10 stocks (CE and PE together). Rank = Rating, best first. <b>Why</b> says in plain words what is good (&#10004;) and weak (&#10006;). Blue edge = the scanner's pick.</p>
+    <p class="note">Rating 0-100 (each &#9733; = 20 points): 70% from the six grades (L R P S K J) + 30% from KEPT juice. Strikes blocked by the rules are capped at 45. GONE (juice already fell 20%+ from today's top) -15. Scanner pick +5 (it passed the 2-year backtest rules). The Grade filter at the top also applies. Tap any column name to sort it your way.</p>
+    <p class="note"><b>All CE / All PE:</b> <b>CALL (CE)</b> strikes of all top-10 stocks in ONE table. Sort by any column (default: KEPT, high to low) and pick the juiciest. Blue edge = the scanner's pick.</p>
+    <p class="note">Grade filter (top of the page) also applies here. Tap a stock name above to hide or show it.</p>
+    <p class="note"><b>Ladder:</b> Green row = passes the rules (darker = best KEPT). Blue edge = the scanner's pick. vs top = premium now &divide; today's high (100% = still at the top). KEPT = &#8377; per day per &#8377;1 lakh margin you keep after expected losses (MODEL). Touch = % of past windows (2 yrs) that touched the strike.</p>
+    <p class="note"><b>Juice Live:</b> Every candidate strike from the last full scan, priced live by Juice Live. Default sort: KEPT, high to low.</p>
+    <p class="note"><b>General:</b> tap any column name to sort (tap again = reverse). Place orders in the Kite app. Data, not advice.</p>
+  </details>
 </main>
 </div>
 
@@ -435,16 +437,16 @@ function header() {
   var mkt = wd >= 1 && wd <= 5 && hm >= 915 && hm <= 1530;
   var s = $("stale");
   if (mkt && mins > 10) { s.textContent = "Data is " + mins + " min old. Is the Mac running Juice Website.command?"; s.classList.remove("hide"); }
-  else if (!live) { s.textContent = "Market closed: these are last-session prices. 'vs top' and Status fill in after 09:15."; s.classList.remove("hide"); }
   else s.classList.add("hide");
 }
 
 function renderPos() {
   var h = DATA.held || [], el = $("mypos");
   if (!h.length) {
-    el.innerHTML = '<b>My trades</b> <span class="note">none tracked yet. Tap <b>I sold</b> on any row, or send /sell HDFCBANK 820 CE 7.30 to @AshitOptionsBot.</span>';
+    el.innerHTML = ""; el.classList.add("hide");
     return;
   }
+  el.classList.remove("hide");
   el.innerHTML = "<b>My trades</b> (watched by the bot)" + '<div class="wrap" style="margin-top:6px"><table><thead><tr><th class="l">Position</th><th>Entry</th><th>Now</th><th>P&amp;L</th><th>Collected</th><th>Spot</th><th>OTM %</th><th>TP</th><th>Stop</th><th class="l">Alert</th><th>Stop tracking</th></tr></thead><tbody>' +
     h.map(function (e) {
       var pnl = n(e.pnl), left = n(e.left);
@@ -471,7 +473,6 @@ function renderTop() {
     { k: "stock", t: "Option", a: "l", txt: 1, f: function (r) { return '<span class="opt" data-s="' + esc(r.stock) + '">' + esc(r.stock) + " " + r.strike + " " + r.type + "</span>"; } },
     { k: "_score", t: "Grade", a: "l", sv: function (r) { return grade(r).score; }, f: gcell },
     { k: "expiry", t: "Exp", a: "c", txt: 1, f: function (r) { return dmy(r.expiry); } },
-    { k: "bid", t: "Bid", f: function (r) { return f(r.bid); } },
     { k: "prem", t: "Prem/lot", f: function (r) { return f0(r.prem); } },
     { k: "now_top", t: "vs top", f: function (r) { return '<span class="k ' + topc(r.now_top) + '">' + pc(r.now_top) + "</span>"; } },
     { k: "status", t: "Status", a: "c", txt: 1, f: function (r) { return badge(r.status); } },
@@ -497,8 +498,6 @@ var LADCOLS = function (max) { return [
   { k: "_score", t: "Grade", a: "l", sv: function (r) { return grade(r).score; }, f: gcell },
   { k: "otm", t: "OTM%", f: function (r) { return f(r.otm, 1); } },
   { k: "sigma", t: "&sigma;", f: function (r) { return f(r.sigma, 1); } },
-  { k: "bid", t: "Bid", f: function (r) { return f(r.bid); } },
-  { k: "ask", t: "Ask", f: function (r) { return f(r.ask); } },
   { k: "prem", t: "Prem/lot", f: function (r) { return '<span class="' + ((n(r.prem) || 0) < 2000 ? "m" : "") + '">' + f0(r.prem) + "</span>"; } },
   { k: "now_top", t: "vs top", f: function (r) { return '<span class="k ' + topc(r.now_top) + '">' + pc(r.now_top) + "</span>"; } },
   { k: "status", t: "Status", a: "c", txt: 1, f: function (r) { return badge(r.status); } },
@@ -684,7 +683,6 @@ function renderJL() {
     { k: "_score", t: "Grade", a: "l", sv: function (r) { return grade(r).score; }, f: gcell },
     { k: "spot", t: "Spot", f: function (r) { return f(r.spot); } },
     { k: "otm", t: "OTM%", f: function (r) { return f(r.otm, 1); } },
-    { k: "bid", t: "Bid", f: function (r) { return f(r.bid); } },
     { k: "prem", t: "Prem/lot", f: function (r) { return f0(r.prem); } },
     { k: "off_hi", t: "Off high", f: function (r) { var v = n(r.off_hi); return '<span class="k ' + (v === null ? "m" : (v <= 5 ? "g" : (v >= 20 ? "r" : "a"))) + '">' + pc(v) + "</span>"; } },
     { k: "status", t: "Status", a: "c", txt: 1, f: function (r) { return badge(r.status); } },
@@ -704,6 +702,8 @@ function renderJL() {
 
 function render() {
   if (!DATA) return;
+  var nga = Object.keys(GF).filter(function (k) { return GF[k]; }).length;
+  $("gcount").textContent = nga ? "(" + nga + " active - tap to change)" : "(tap to open; A = best)";
   header();
   if (TAB === "mk") renderMk(); else if (TAB === "top") renderTop(); else if (TAB === "tl") renderTL(); else if (TAB === "aCE") renderAll("CE"); else if (TAB === "aPE") renderAll("PE"); else if (TAB === "lad") renderLad(); else renderJL();
 }
