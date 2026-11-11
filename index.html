@@ -69,6 +69,12 @@ details.tl summary::-webkit-details-marker{display:none}
 details.tl summary .rk{display:inline-block;min-width:30px;font-weight:800;color:var(--blue)}
 details.tl summary .sm{font-size:12px;color:var(--mut);margin-left:30px;margin-top:3px}
 details.tl .in{padding:0 10px 10px}
+.big-ix{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.big-ix .ix{flex:1;min-width:160px;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:10px}
+.big-ix .n{font-size:13px;color:var(--mut);font-weight:700}
+.big-ix .v{font-size:24px;font-weight:800}
+.mtag{font-size:10px;font-weight:800;color:#fff;border-radius:3px;padding:0 4px;margin-left:4px}
+.mnote{white-space:normal;text-align:left;min-width:220px;font-size:12px;color:var(--a)}
 .cm{white-space:normal;min-width:250px;max-width:430px;font-size:12px;text-align:left;line-height:1.4}
 .cm .g,.cm .r{white-space:nowrap}
 .stars{color:#e0a100;letter-spacing:-1px;font-size:14px}
@@ -105,6 +111,7 @@ details.tl .in{padding:0 10px 10px}
   <h1>Juice <span id="livep" class="pill"></span> <span id="agep" class="pill" style="background:#55606e"></span></h1>
   <div class="sub" id="sub"></div>
   <nav>
+    <button data-tab="mk">Market</button>
     <button data-tab="top" class="on">Top 10</button>
     <button data-tab="tl">Top 10 Ladders (ranked)</button>
     <button data-tab="aCE">All CE strikes</button>
@@ -131,6 +138,16 @@ details.tl .in{padding:0 10px 10px}
     <div class="note" style="margin-top:6px">Telegram opens. Tap <b>START</b> at the bottom. The bot confirms in a second.</div>
     <button class="x" id="mx">Cancel</button>
   </div></div>
+
+  <section id="tab-mk" class="hide">
+    <div class="big-ix" id="mkix"></div>
+    <div class="card" id="mkbanks"></div>
+    <div class="card">
+      <div class="meta" id="mkmeta"></div>
+      <div class="wrap" id="mktable"></div>
+      <div class="note">Day = vs yesterday's close. 3s / 6s / 10s = vs the close 3 / 6 / 10 sessions ago (today included). Streak = sessions in a row up or down. vs 20d = distance from the 20-day average. Here it refreshes every 2-3 min; on the Mac (or phone on home Wi-Fi) it updates every second: http://Ashits-Mac-mini.local:8766/market.html</div>
+    </div>
+  </section>
 
   <section id="tab-top">
     <div class="card" id="mypos"></div>
@@ -400,7 +417,7 @@ document.querySelectorAll("nav button[data-tab]").forEach(function (b) {
   b.onclick = function () { TAB = b.getAttribute("data-tab"); store("juice_tab", TAB); showTab(); };
 });
 function showTab() {
-  ["top", "tl", "aCE", "aPE", "lad", "jl"].forEach(function (t) { $("tab-" + t).classList.toggle("hide", t !== TAB); });
+  ["mk", "top", "tl", "aCE", "aPE", "lad", "jl"].forEach(function (t) { $("tab-" + t).classList.toggle("hide", t !== TAB); });
   document.querySelectorAll("nav button[data-tab]").forEach(function (b) { b.classList.toggle("on", b.getAttribute("data-tab") === TAB); });
   render();
 }
@@ -623,6 +640,34 @@ function renderBest(pfx, fixedSide) {
 function renderTL() { renderBest("tl", null); }
 function renderAll(typ) { renderBest("a" + typ, typ); }
 
+function pp(x, d) { var v = n(x); if (v === null) return '<span class="m">-</span>'; return '<span class="k ' + (v > 0 ? "g" : (v < 0 ? "r" : "m")) + '">' + (v > 0 ? "+" : "") + v.toFixed(d === undefined ? 1 : d) + "%</span>"; }
+function renderMk() {
+  var M = DATA.market;
+  if (!M || !M.rows || !M.rows.length) { $("mktable").innerHTML = '<div class="note" style="padding:10px">No market data yet. It comes from the Juice Website window on the Mac.</div>'; $("mkix").innerHTML = ""; $("mkbanks").innerHTML = ""; return; }
+  $("mkmeta").innerHTML = "Spot prices at <b>" + esc(String(M.generated).slice(11, 19)) + " IST</b> - source: " + esc(M.source) + (M.feed_error ? " - " + esc(M.feed_error) : "");
+  $("mkix").innerHTML = M.rows.filter(function (r) { return r.group === "index"; }).map(function (r) {
+    return '<div class="ix"><div class="n">' + esc(r.sym) + '</div><div class="v">' + f(r.spot) + "</div><div>" + pp(r.day, 2) + " today &middot; " + pp(r.s6) + " in 6 &middot; " + r.streak_txt + "</div></div>";
+  }).join("");
+  $("mkbanks").innerHTML = M.banks ? "&#127974; " + esc(M.banks.text) : "";
+  var TG = { top10: ["TOP10", "#1a5fb4"], bank: ["BANK", "#7d3c98"], held: ["YOURS", "#e67e22"], index: ["INDEX", "#555"] };
+  var rows = M.rows.map(function (r, i) { r._o = i; return r; });
+  table($("mktable"), "mk", [
+    { k: "sym", t: "Symbol", a: "l", txt: 1, f: function (r) { var t = r.held ? TG.held : TG[r.group]; return "<b>" + esc(r.sym) + "</b>" + (t ? '<span class="mtag" style="background:' + t[1] + '">' + t[0] + "</span>" : ""); } },
+    { k: "spot", t: "Spot", f: function (r) { return "<b>" + f(r.spot) + "</b>"; } },
+    { k: "day", t: "Day", f: function (r) { return pp(r.day, 2); } },
+    { k: "s3", t: "3s", f: function (r) { return pp(r.s3); } },
+    { k: "s6", t: "6s", f: function (r) { return pp(r.s6); } },
+    { k: "s10", t: "10s", f: function (r) { return pp(r.s10); } },
+    { k: "streak", t: "Streak", a: "l", f: function (r) { return r.streak_txt; } },
+    { k: "up_of_6", t: "Up of 6", f: function (r) { return r.up_of_6 === null || r.up_of_6 === undefined ? "-" : r.up_of_6 + " of 6"; } },
+    { k: "vs20", t: "vs 20d", f: function (r) { return pp(r.vs20); } },
+    { k: "lo5", t: "5-day low", f: function (r) { return f(r.lo5); } },
+    { k: "hi5", t: "5-day high", f: function (r) { return f(r.hi5); } },
+    { k: "prev_close", t: "Prev close", f: function (r) { return f(r.prev_close); } },
+    { k: "note", t: "Comment", a: "l", txt: 1, f: function (r) { return '<div class="mnote">' + esc(r.note) + "</div>"; } }
+  ], rows, null, { k: "_o", d: "asc" });
+}
+
 function renderJL() {
   var rows = DATA.juice || [], jm = DATA.juice_meta || {};
   $("jlmeta").innerHTML = rows.length ? ("Juice Live " + esc(DATA.juice_generated || "") + " - scan " + esc(jm.scan || "-") + " - rules: " + esc(jm.rules || "-")) :
@@ -660,7 +705,7 @@ function renderJL() {
 function render() {
   if (!DATA) return;
   header();
-  if (TAB === "top") renderTop(); else if (TAB === "tl") renderTL(); else if (TAB === "aCE") renderAll("CE"); else if (TAB === "aPE") renderAll("PE"); else if (TAB === "lad") renderLad(); else renderJL();
+  if (TAB === "mk") renderMk(); else if (TAB === "top") renderTop(); else if (TAB === "tl") renderTL(); else if (TAB === "aCE") renderAll("CE"); else if (TAB === "aPE") renderAll("PE"); else if (TAB === "lad") renderLad(); else renderJL();
 }
 ["ladside", "ladpass", "ladgone", "jlside", "jlpass", "jlgone", "jlmin", "tlside", "tlstars", "tlpass", "tlgone", "tlmin", "tltouch", "tlotm", "aCEstars", "aPEstars",
  "aCEpass", "aCEgone", "aCEmin", "aCEtouch", "aCEotm", "aPEpass", "aPEgone", "aPEmin", "aPEtouch", "aPEotm"].forEach(function (id) { $(id).onchange = render; });
