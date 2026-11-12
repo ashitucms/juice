@@ -42,6 +42,8 @@ td:first-child,th:first-child{position:sticky;left:0;z-index:1;background:inheri
 tr{background:var(--card)}
 tr:nth-child(even){background:var(--alt)}
 tr.pass{background:var(--pass)}
+.tA{background:rgba(10,125,50,.16)}.tB{background:rgba(230,170,0,.16)}.tC{background:rgba(200,40,40,.13)}
+.tier{display:inline-block;min-width:18px;text-align:center;font-weight:800;border-radius:4px;padding:0 4px;color:#fff}.tierA{background:#0a7d32}.tierB{background:#b8860b}.tierC{background:#b03030}
 tr.best{background:var(--best)}
 tr.held{background:var(--hl)}
 tr.pick td:first-child{box-shadow:inset 4px 0 0 var(--blue)}
@@ -150,6 +152,7 @@ details.foot p{margin:6px 0}
 
   <section id="tab-top">
     <div class="card" id="mypos"></div>
+    <div class="card" id="todaycard"><div class="meta" id="todaymeta"></div><div class="wrap" id="todaytable"></div></div>
     <div class="card">
       <div class="meta" id="topmeta"></div>
       <div class="wrap" id="toptable"></div>
@@ -460,7 +463,32 @@ function renderPos() {
     }).join("") + "</tbody></table></div>";
 }
 
+function renderToday() {
+  var t = DATA.today;
+  if (!t || !t.rows || !t.rows.length) { $("todaycard").style.display = "none"; return; }
+  $("todaycard").style.display = "";
+  var st = t.file.replace("today_", "").replace(".csv", "");
+  var hm = st.slice(9, 11) + ":" + st.slice(11, 13);
+  var early = parseInt(st.slice(9, 13), 10) < 1015;
+  $("todaymeta").innerHTML = "<b>Top " + t.rows.length + " TODAY (graded)</b> " + st.slice(6, 8) + "/" + st.slice(4, 6) + " " + hm + " IST" +
+    (early ? ' <span class="a k">WATCH only - enter after 10:15</span>' : "") +
+    '<br><span class="note">A = Rule C + tested edge (28 months) &middot; B = edge window, ROI under 2.5% &middot; C = no tested edge: half size or skip. ' +
+    "TP = buy back price. CE: live stop. PE: no premium stop, exit if spot reaches alert.</span>";
+  var h = '<table><thead><tr><th>#</th><th>Tier</th><th class="l">Option</th><th>Exp</th><th>Sess</th><th>&sigma;</th><th>Sell at</th><th>Now</th>' +
+    "<th>Prem/lot</th><th>Margin</th><th>ROI%</th><th>Touch</th><th>TP</th><th>Stop / spot alert</th><th>Exit by</th><th class=l>Why</th></tr></thead><tbody>";
+  t.rows.forEach(function (r) {
+    var tr = esc(r.tier || "");
+    h += '<tr class="t' + tr + '"><td class="c">' + r.n + '</td><td class="c"><span class="tier tier' + tr + '">' + tr + "</span></td>" +
+      '<td class="l k">' + esc(r.stock) + " " + r.strike + " " + esc(r.type) + "</td><td>" + dmy(r.expiry) + "</td><td>" + esc(r.sl) + "</td><td>" + f(r.sigma) +
+      "</td><td class=k>" + f(r.sell_at) + "</td><td>" + f(r.now_mid) + "</td><td>" + f0(r.prem) + "</td><td>" + f0(r.margin) + "</td><td>" + f(r.roi) +
+      "</td><td>" + f(r.touch, 1) + "</td><td>" + f(r.tp) + "</td><td>" + (r.type === "CE" ? "SL " + esc(r.stop) : "spot " + f(r.spot_alert, 1)) +
+      "</td><td>" + dmy(r.exit) + '</td><td class="l note">' + esc(r.why) + "</td></tr>";
+  });
+  $("todaytable").innerHTML = h + "</tbody></table>";
+}
+
 function renderTop() {
+  renderToday();
   renderPos();
   var t = DATA.top10;
   if (!t) { $("toptable").innerHTML = '<div class="note" style="padding:10px">No top-10 list yet.</div>'; return; }
