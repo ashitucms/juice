@@ -152,6 +152,7 @@ details.foot p{margin:6px 0}
 
   <section id="tab-top">
     <div class="card" id="mypos"></div>
+    <div class="card" id="dualcard" style="display:none"><div class="meta" id="dualmeta"></div><div class="wrap" id="dualtable"></div></div>
     <div class="card" id="todaycard"><div class="meta" id="todaymeta"></div><div class="wrap" id="todaytable"></div></div>
     <div class="card">
       <div class="meta" id="topmeta"></div>
@@ -257,6 +258,7 @@ details.foot p{margin:6px 0}
 var API = "https://api.github.com/repos/ashitucms/juice/contents/data.json?ref=data";
 var RAW = "https://raw.githubusercontent.com/ashitucms/juice/data/data.json";
 var PW = null, DATA = null, LAST_T = null, LADSYM = null;
+var DUALRAW = "https://raw.githubusercontent.com/ashitucms/juice/dual/dual.json", DUAL = null, DUAL_T = null;
 var $ = function (id) { return document.getElementById(id); };
 function store(k, v) { try { if (v === undefined) return localStorage.getItem(k); if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) { return null; } }
 
@@ -287,10 +289,20 @@ async function decrypt(blob, pw) {
   var ds = new Blob([plain]).stream().pipeThrough(new DecompressionStream("gzip"));
   return JSON.parse(await new Response(ds).text());
 }
+async function loadDual(pw) {   // Opus + Fable check (16 Nov 2026), separate file on branch "dual"
+  try {
+    var r = await fetch(DUALRAW + "?t=" + Date.now(), { cache: "no-store" });
+    if (!r.ok) return false;
+    var blob = await r.json();
+    if (!blob || !blob.ct || blob.t === DUAL_T) return false;
+    DUAL = await decrypt(blob, pw); DUAL_T = blob.t; return true;
+  } catch (e) { return false; }
+}
 async function load(pw) {
+  var dch = await loadDual(pw);
   var blob = await fetchBlob();
   if (!blob || !blob.ct) throw new Error("no data yet - start Juice Website.command on the Mac");
-  if (DATA && blob.t === LAST_T) return false;
+  if (DATA && blob.t === LAST_T) return dch;
   var d = await decrypt(blob, pw);
   DATA = d; LAST_T = blob.t; return true;
 }
@@ -463,7 +475,33 @@ function renderPos() {
     }).join("") + "</tbody></table></div>";
 }
 
+function renderDual() {
+  var D = DUAL;
+  if (!D || !D.rows) { $("dualcard").style.display = "none"; return; }
+  $("dualcard").style.display = "";
+  var vc = { "BOTH": "#0a7d32", "FABLE only": "#1f5fbf", "OPUS only": "#c46a00", "neither": "#888" };
+  var cnt = D.counts || {};
+  $("dualmeta").innerHTML = "<b>OPUS + FABLE check</b> &middot; scan " + esc(D.scan_time) + " IST &middot; NIFTY 20d " + f(D.nifty20, 1) + "% &middot; " +
+    "both " + (cnt["BOTH"] || 0) + ", Fable only " + (cnt["FABLE only"] || 0) + ", Opus only " + (cnt["OPUS only"] || 0) + ", neither " + (cnt["neither"] || 0) +
+    '<br><span class="note"><b>Fable CHOSEN:</b> ' + esc(D.rules["F-B*"]) + "<br><b>Fable A:</b> " + esc(D.rules["F-A"]) +
+    "<br><b>Fable D:</b> " + esc(D.rules["F-D"]) + "<br><b>Opus:</b> " + esc(D.rules["Opus"]) +
+    "<br><b>Backtest Jul 2024-Oct 2026 (per trade, worst month):</b> " +
+    (D.backtest || []).map(function (b) { return esc(b[0]) + " " + f(b[1]) + "% (" + esc(b[2]) + ")"; }).join(" &middot; ") + "</span>";
+  var rows = D.rows.filter(function (r) { return r.verdict !== "neither"; });
+  if (!rows.length) { $("dualtable").innerHTML = '<p class="note">No strike passes either rule set in this scan.</p>'; return; }
+  var h = '<table><thead><tr><th>Verdict</th><th class="l">Option</th><th>Exp</th><th>Sess</th><th>&sigma;</th><th>Bid</th><th>Prem/lot</th>' +
+    '<th>% margin</th><th>Stock 20d</th><th>SL 3.5&times;</th><th>Opus</th><th>Fable rule</th><th class="l">Fable says</th></tr></thead><tbody>';
+  rows.forEach(function (r) {
+    h += "<tr><td class=c>" + badge(r.verdict, vc[r.verdict] || "#888") + '</td><td class="l k">' + esc(r.stock) + " " + r.strike + " " + esc(r.type) +
+      "</td><td>" + dmy(r.expiry) + "</td><td>" + r.H + "</td><td>" + f(r.sigma) + "</td><td class=k>" + f(r.bid) + "</td><td>" + f0(r.prem) +
+      "</td><td>" + f(r.roi, 1) + "</td><td>" + f(r.trend20, 1) + "%</td><td>" + f(r.stop) + "</td><td>" + esc(r.opus) +
+      '</td><td>' + esc(r.fable_rule) + '</td><td class="l note">' + esc(r.fable) + (r.opus_why ? " | Opus: " + esc(r.opus_why) : "") + "</td></tr>";
+  });
+  $("dualtable").innerHTML = h + "</tbody></table>";
+}
+
 function renderToday() {
+  renderDual();
   var t = DATA.today;
   if (!t || !t.rows || !t.rows.length) { $("todaycard").style.display = "none"; return; }
   $("todaycard").style.display = "";
