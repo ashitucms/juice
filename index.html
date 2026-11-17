@@ -493,7 +493,7 @@ function renderDual() {
     '<th>% margin</th><th>Stock 20d</th><th>SL 3.5&times;</th><th>Opus</th><th>Fable rule</th><th class="l">Fable says</th></tr></thead><tbody>';
   rows.forEach(function (r) {
     h += "<tr><td class=c>" + badge(r.verdict, vc[r.verdict] || "#888") + '</td><td class="l k">' + esc(r.stock) + " " + r.strike + " " + esc(r.type) +
-      "</td><td>" + dmy(r.expiry) + "</td><td>" + r.H + "</td><td>" + f(r.sigma) + "</td><td class=k>" + f(r.bid) + "</td><td>" + f0(r.prem) +
+      "</td><td>" + dmy(r.expiry) + "</td><td>" + r.H + "</td><td>" + f(r.sigma) + "</td><td class=k>" + f(r.bid) + (r.px_time ? ' <span class="note">@' + esc(r.px_time) + "</span>" : "") + "</td><td>" + f0(r.prem) +
       "</td><td>" + f(r.roi, 1) + "</td><td>" + f(r.trend20, 1) + "%</td><td>" + f(r.stop) + "</td><td>" + esc(r.opus) +
       '</td><td>' + esc(r.fable_rule) + '</td><td class="l note">' + esc(r.fable) + (r.opus_why ? " | Opus: " + esc(r.opus_why) : "") + "</td></tr>";
   });
