@@ -152,6 +152,7 @@ details.foot p{margin:6px 0}
 
   <section id="tab-top">
     <div class="card" id="mypos"></div>
+    <div class="card" id="plancard" style="display:none"><div class="meta" id="planmeta"></div><div class="wrap" id="plantable"></div></div>
     <div class="card" id="dualcard" style="display:none"><div class="meta" id="dualmeta"></div><div class="wrap" id="dualtable"></div></div>
     <div class="card" id="todaycard"><div class="meta" id="todaymeta"></div><div class="wrap" id="todaytable"></div></div>
     <div class="card">
@@ -500,7 +501,29 @@ function renderDual() {
   $("dualtable").innerHTML = h + "</tbody></table>";
 }
 
+function renderPlans() {
+  var P = (DATA && DATA.plans) || {};
+  if (!P.goldm && !P.nifty) { $("plancard").style.display = "none"; return; }
+  $("plancard").style.display = "";
+  $("planmeta").innerHTML = "<b>GOLDM + NIFTY plans</b> (Ajit-style far selling, hold to expiry, research only)";
+  var h = '<table><thead><tr><th class="l">Plan</th><th class="l">Sell</th><th>Expiry</th><th>Price</th><th>Prem/lot</th><th class="l">Notes</th></tr></thead><tbody>';
+  if (P.goldm) {
+    var g = P.goldm;
+    h += '<tr><td class="l k">GOLDM G1 call</td><td class="l k">' + esc(String(parseInt(g.strike, 10))) + " CE</td><td>" + esc(g.expiry) + "</td><td>" + esc(g.sell) +
+      "</td><td>" + esc(g.prem_lot) + '</td><td class="l note">' + esc(g.sigma) + " sigma, delta " + esc(g.delta) + ", OI " + esc(g.oi) + ", " + esc(g.dte) + " days left" +
+      (String(g.window) === "True" ? "" : " - OUTSIDE 4-9 day window, no trade") + " | run " + esc(g.run) + " | 1 lot, no stop, no puts</td></tr>";
+  }
+  if (P.nifty) {
+    var n = P.nifty;
+    h += '<tr><td class="l k">NIFTY far strangle</td><td class="l k">' + esc(n.ce) + " CE + " + esc(n.pe) + " PE</td><td>" + esc(n.expiry) + "</td><td>" + esc(n.ce_sell) + " + " + esc(n.pe_sell) +
+      "</td><td>" + Math.round(parseFloat(n.credit_pts) * parseFloat(n.lot)) + '</td><td class="l note">CE +' + esc(n.ce_pct) + "% / PE -" + esc(n.pe_pct) + "%, spot " + esc(n.spot) +
+      ", margin " + esc(n.margin) + " | run " + esc(n.run_time) + " | hold to expiry, exit a leg only at 8x</td></tr>";
+  }
+  $("plantable").innerHTML = h + "</tbody></table>";
+}
+
 function renderToday() {
+  renderPlans();
   renderDual();
   var t = DATA.today;
   if (!t || !t.rows || !t.rows.length) { $("todaycard").style.display = "none"; return; }
